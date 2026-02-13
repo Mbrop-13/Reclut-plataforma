@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea" // Need to create or use existing
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, ArrowRight, Upload, MapPin, Building2, Globe, Check, Image as ImageIcon } from "lucide-react"
+import Image from "next/image"
 import { toast } from "sonner"
 import { db, auth, storage } from "@/lib/firebase"
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore"
@@ -237,7 +238,7 @@ export default function CompletarPerfilPage() {
                         {PASOS.map((p) => (
                             <div key={p.numero} className="flex items-center gap-3">
                                 <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${paso > p.numero ? 'bg-[hsl(var(--success))] text-white' :
-                                        paso === p.numero ? 'bg-[#1890ff] text-white' : 'bg-[hsl(var(--gray-200))] text-[hsl(var(--gray-500))]'
+                                    paso === p.numero ? 'bg-[#1890ff] text-white' : 'bg-[hsl(var(--gray-200))] text-[hsl(var(--gray-500))]'
                                     }`}>
                                     {paso > p.numero ? <Check className="w-4 h-4" /> : p.numero}
                                 </div>
@@ -332,7 +333,7 @@ export default function CompletarPerfilPage() {
                                             />
                                             {logoPreview ? (
                                                 <div className="relative w-32 h-32 mb-4">
-                                                    <img src={logoPreview} alt="Preview" className="w-full h-full object-contain rounded-lg" />
+                                                    <Image src={logoPreview} alt="Preview" fill className="object-contain rounded-lg" />
                                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg opacity-0 hover:opacity-100 transition-opacity">
                                                         <span className="text-white text-xs font-medium">Cambiar</span>
                                                     </div>

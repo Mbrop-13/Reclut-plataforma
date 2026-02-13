@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Mic, MicOff, Video, VideoOff, Play, Pause } from "lucide-react"
@@ -50,7 +51,14 @@ export function AvatarInterviewer({
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 to-slate-900 flex items-center justify-center">
                     <div className="text-center">
                         <div className="w-48 h-48 bg-gray-700 rounded-full mx-auto mb-4 animate-pulse relative overflow-hidden">
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarId}`} alt="Avatar" className="w-full h-full object-cover" />
+                            <div className="relative w-full h-full">
+                                <Image
+                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarId}`}
+                                    alt="Avatar"
+                                    fill
+                                    className="object-cover"
+                                />
+                            </div>
                         </div>
                         <h3 className="text-white text-xl font-medium">Interview in progress</h3>
                         <p className="text-slate-400 text-sm">AI Avatar is listening...</p>
