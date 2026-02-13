@@ -112,8 +112,8 @@ export default function InterviewStudioPage() {
                                         <User className="h-16 w-16 text-slate-400" />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold">Hello, I&apos;m {activeAvatar.charAt(0).toUpperCase() + activeAvatar.slice(1)}</h3>
-                                        <p className="text-slate-400">I&apos;ll be conducting the interview today.</p>
+                                        <h3 className="text-xl font-bold">Hello, I&rsquo;m {activeAvatar.charAt(0).toUpperCase() + activeAvatar.slice(1)}</h3>
+                                        <p className="text-slate-400">I&rsquo;ll be conducting the interview today.</p>
                                     </div>
                                     <div className="flex space-x-4 justify-center mt-6">
                                         <Button size="sm" variant="secondary"><Mic className="mr-2 h-4 w-4" /> Test Voice</Button>

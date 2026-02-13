@@ -234,7 +234,7 @@ export default function CandidateDetailPage({ params }: { params: { id: string }
                                         Grok 4.1 Fast Analysis
                                     </CardTitle>
                                     <CardDescription className="text-blue-100">
-                                        Detailed AI evaluation of the candidate&apos;s fit for the Senior Frontend Developer role.
+                                        Detailed AI evaluation of the candidate&rsquo;s fit for the Senior Frontend Developer role.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
