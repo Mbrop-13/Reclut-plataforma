@@ -15,6 +15,7 @@ import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { EMPLEOS } from "@/lib/mock-data"
 
 export default function EmpleoDetallePage({ params }: { params: { id: string } }) {
     const [job, setJob] = useState<any>(null)
@@ -43,9 +44,39 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
         }
     })
 
+
+
     useEffect(() => {
         const fetchJob = async () => {
             try {
+                // First check if it's a mock job
+                const mockJob = EMPLEOS.find(e => e.id === params.id)
+                if (mockJob) {
+                    setJob({
+                        id: mockJob.id,
+                        title: mockJob.titulo,
+                        location: mockJob.ubicacion,
+                        workMode: mockJob.modalidad,
+                        salaryMin: mockJob.salaryMin,
+                        salaryMax: mockJob.salaryMax,
+                        currency: mockJob.currency,
+                        description: mockJob.descripcion,
+                        requirements: mockJob.requirements,
+                        responsibilities: mockJob.responsibilities,
+                        benefits: mockJob.benefits,
+                        enableAvatarInterview: true, // Default enabled for mock
+                        minScore: 70
+                    })
+                    setCompany({
+                        name: mockJob.empresa,
+                        logoUrl: mockJob.logo,
+                        description: mockJob.companyDescription,
+                        website: mockJob.companyWebsite
+                    })
+                    setIsLoading(false)
+                    return
+                }
+
                 const jobDoc = await getDoc(doc(db, "jobs", params.id))
                 if (jobDoc.exists()) {
                     const jobData = jobDoc.data()

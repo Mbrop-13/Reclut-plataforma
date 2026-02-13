@@ -151,7 +151,7 @@ export default function InterviewStudioPage() {
                                             <div className="flex items-center space-x-2">
                                                 <Label className="text-xs">Response Type:</Label>
                                                 <Select defaultValue={q.type}>
-                                                    <SelectTrigger className="w-[120px] h-8 text-xs">
+                                                    <SelectTrigger className="w-[120px] h-8 text-xs"> 
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
