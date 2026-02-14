@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
     MapPin, Building2, CheckCircle2,
     DollarSign, Heart, ArrowLeft,
-    Calendar, Globe, Loader2, BrainCircuit, Sparkles, Check, Clock
+    Calendar, Globe, Loader2, BrainCircuit, Sparkles, Check, Clock, FileText
 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { doc, getDoc, addDoc, collection, updateDoc, serverTimestamp } from "firebase/firestore"
