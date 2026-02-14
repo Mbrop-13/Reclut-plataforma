@@ -4,6 +4,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { MainHeader } from "@/components/layout/main-header"
 import {
     Search, Briefcase, Building2, Users, Clock, Shield,
     Zap, Check, Star, ChevronRight, Play, ArrowRight
@@ -22,50 +23,8 @@ const stagger = {
 export default function Home() {
     return (
         <div className="min-h-screen bg-white">
-            {/* Header - Clean & Minimal */}
-            <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-[hsl(var(--gray-200))]">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">R</span>
-                            </div>
-                            <span className="text-xl font-semibold text-[hsl(var(--gray-900))]">
-                                <span className="text-[#1890ff]">Re</span>
-                                <span>clut</span>
-                            </span>
-                        </Link>
-
-                        {/* Nav */}
-                        <nav className="hidden md:flex items-center gap-8">
-                            {["Para Candidatos", "Para Empresas", "Precios", "Recursos"].map((item) => (
-                                <Link
-                                    key={item}
-                                    href="#"
-                                    className="text-sm font-medium text-[hsl(var(--gray-600))] hover:text-[hsl(var(--gray-900))] transition-colors"
-                                >
-                                    {item}
-                                </Link>
-                            ))}
-                        </nav>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-3">
-                            <Link href="/login">
-                                <Button variant="ghost" className="text-sm font-medium">
-                                    Iniciar Sesión
-                                </Button>
-                            </Link>
-                            <Link href="/registro">
-                                <Button className="btn-primary">
-                                    Comenzar Gratis
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            {/* Header - Global & Smart */}
+            <MainHeader />
 
             <main className="pt-16">
                 {/* Hero Section - Minimal & Centered */}

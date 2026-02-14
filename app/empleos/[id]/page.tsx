@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { MainHeader } from "@/components/layout/main-header"
 import {
     MapPin, Building2, CheckCircle2,
     DollarSign, Heart, ArrowLeft,
@@ -24,7 +25,6 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     const [currentUser, setCurrentUser] = useState<any>(null)
     const router = useRouter()
 
-    const [headerVisible, setHeaderVisible] = useState(true)
     const { scrollY } = useScroll()
 
     // Application Flow State
@@ -33,16 +33,6 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     const [analysisProgress, setAnalysisProgress] = useState(0)
     const [aiScore, setAiScore] = useState<number | null>(null)
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
-
-    // Dynamic header
-    useMotionValueEvent(scrollY, "change", (latest) => {
-        const previous = scrollY.getPrevious() ?? 0
-        if (latest > previous && latest > 100) {
-            setHeaderVisible(false)
-        } else {
-            setHeaderVisible(true)
-        }
-    })
 
 
 
@@ -215,29 +205,7 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
             {/* Navigation Header */}
-            <motion.header
-                initial={{ y: 0 }}
-                animate={{ y: headerVisible ? 0 : -100 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100"
-            >
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-[#1890ff] flex items-center justify-center shadow-lg shadow-[#1890ff]/20">
-                                <span className="text-white font-bold text-lg">R</span>
-                            </div>
-                            <span className="text-xl font-bold tracking-tight hidden sm:block text-slate-900">
-                                Re<span className="text-[#1890ff]">clut</span>
-                            </span>
-                        </Link>
-                        <div className="flex items-center gap-3">
-                            <Button variant="ghost" className="hidden md:flex">Para Candidatos</Button>
-                            <Button variant="ghost" onClick={() => router.push('/empresas/dashboard')}>Soy Empresa</Button>
-                        </div>
-                    </div>
-                </div>
-            </motion.header>
+            <MainHeader />
 
             {/* Hero Section with Blurred Background */}
             <div className="relative w-full h-[500px] overflow-hidden">

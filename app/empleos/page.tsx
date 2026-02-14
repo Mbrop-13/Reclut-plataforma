@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { MainHeader } from "@/components/layout/main-header"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -22,56 +23,11 @@ const FILTROS = {
 export default function EmpleosPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [showFilters, setShowFilters] = useState(false)
-    const [headerVisible, setHeaderVisible] = useState(true)
-    const { scrollY } = useScroll()
-
-    // Dynamic header visibility based on scroll direction
-    useMotionValueEvent(scrollY, "change", (latest) => {
-        const previous = scrollY.getPrevious() ?? 0
-        if (latest > previous && latest > 100) {
-            setHeaderVisible(false) // Scrolling down
-        } else {
-            setHeaderVisible(true) // Scrolling up
-        }
-    })
 
     return (
         <div className="min-h-screen bg-slate-50">
             {/* Dynamic Transparent Header */}
-            <motion.header
-                initial={{ y: 0 }}
-                animate={{ y: headerVisible ? 0 : -100 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/10"
-            >
-                <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-[#1890ff] flex items-center justify-center shadow-lg shadow-[#1890ff]/25">
-                                <span className="text-white font-bold text-lg">R</span>
-                            </div>
-                            <span className="text-xl font-bold tracking-tight hidden sm:block text-slate-900 dark:text-white">
-                                Re<span className="text-[#1890ff]">clut</span>
-                            </span>
-                        </Link>
-
-                        {/* Auth Buttons */}
-                        <div className="flex items-center gap-3">
-                            <Link href="/login">
-                                <Button variant="ghost" className="text-sm font-medium text-white/80 hover:text-white hover:bg-white/10">
-                                    Iniciar Sesión
-                                </Button>
-                            </Link>
-                            <Link href="/registro">
-                                <Button className="btn-primary rounded-full px-6 shadow-lg shadow-blue-500/30 border-0">
-                                    Registrarse
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </motion.header>
+            <MainHeader />
 
             {/* Premium Hero Section */}
             <div className="relative w-full py-32 lg:py-48 overflow-hidden bg-slate-900">
