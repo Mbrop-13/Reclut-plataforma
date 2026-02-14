@@ -14,7 +14,7 @@ export default function CandidateLayout({
                 <div className="flex h-16 items-center px-4 container mx-auto">
                     <Link href="/" className="flex items-center gap-2 font-bold text-xl mr-8">
                         <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                            TalentAI
+                            Reclu
                         </span>
                         <span className="text-slate-800">Candidate</span>
                     </Link>

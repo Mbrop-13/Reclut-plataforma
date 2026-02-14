@@ -12,7 +12,7 @@ export default function AdminLayout({
                 <div className="flex h-16 items-center px-4 container mx-auto">
                     <Link href="/" className="flex items-center gap-2 font-bold text-xl mr-8">
                         <span className="text-white">
-                            TalentAI
+                            Reclu
                         </span>
                         <span className="text-red-400 text-xs uppercase tracking-widest border border-red-400 px-1 rounded">Admin</span>
                     </Link>

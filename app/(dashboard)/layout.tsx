@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </div>
                         <span className="font-bold text-xl text-slate-900">
                             <span className="text-[#1890ff]">Re</span>
-                            <span>clut</span>
+                            <span>clu</span>
                         </span>
                     </Link>
                 </div>

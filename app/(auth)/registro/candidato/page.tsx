@@ -52,8 +52,9 @@ export default function RegistroCandidatoPage() {
     const handleSubmit = async () => {
         try {
             setIsLoading(true)
-            await signup(formData.email, formData.password, 'CANDIDATE')
-            router.push('/dashboard')
+            const { password, ...profileData } = formData
+            await signup(formData.email, formData.password, 'CANDIDATE', profileData)
+            router.push('/candidatos') // Redirect to candidates dashboard
         } catch (error) {
             console.error("Error al registrar:", error)
             alert("Error al registrar: " + (error as Error).message)
@@ -79,9 +80,9 @@ export default function RegistroCandidatoPage() {
                     <div className="text-center mb-8">
                         <Link href="/" className="inline-flex items-center gap-2 mb-6">
                             <div className="w-10 h-10 rounded-xl bg-[#1890ff] flex items-center justify-center">
-                                <span className="text-white font-bold">T</span>
+                                <span className="text-white font-bold">R</span>
                             </div>
-                            <span className="text-2xl font-semibold text-[hsl(var(--gray-900))]">TalentAI</span>
+                            <span className="text-2xl font-semibold text-[hsl(var(--gray-900))]">Reclu</span>
                         </Link>
                         <h1 className="text-h1 text-[hsl(var(--gray-900))] mb-2">Crear cuenta</h1>
                         <p className="text-body text-[hsl(var(--gray-600))]">

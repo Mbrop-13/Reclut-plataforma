@@ -14,9 +14,9 @@ export default function CandidatosLayout({
                 <div className="container flex h-16 items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                            <span className="text-white font-bold">T</span>
+                            <span className="text-white font-bold">R</span>
                         </div>
-                        <span className="text-xl font-bold tracking-tight">TalentAI Pro</span>
+                        <span className="text-xl font-bold tracking-tight">Reclu</span>
                     </Link>
 
                     <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">

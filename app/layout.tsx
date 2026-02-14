@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Reclut | Plataforma de Reclutamiento con IA",
+    title: "Reclu | Plataforma de Reclutamiento con IA",
     description: "La plataforma más avanzada de reclutamiento con entrevistas por avatar de IA.",
 };
 

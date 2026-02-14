@@ -81,7 +81,7 @@ export default function EmpresasLayout({
                         </div>
                         <span className="text-lg font-bold tracking-tight">
                             <span className="text-[#1890ff]">Re</span>
-                            <span className="text-gray-900">clut</span>
+                            <span className="text-gray-900">clu</span>
                         </span>
                     </Link>
                     <Button variant="ghost" size="icon">
@@ -97,7 +97,7 @@ export default function EmpresasLayout({
                         </div>
                         <span className="text-xl font-bold tracking-tight">
                             <span className="text-[#1890ff]">Re</span>
-                            <span className="text-gray-900">clut</span>
+                            <span className="text-gray-900">clu</span>
                         </span>
                     </Link>
 

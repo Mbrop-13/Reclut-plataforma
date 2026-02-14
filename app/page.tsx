@@ -349,7 +349,7 @@ export default function Home() {
                                 ¿Listo para transformar tu proceso de contratación?
                             </h2>
                             <p className="text-body-lg text-[hsl(var(--gray-400))] mb-8 max-w-2xl mx-auto">
-                                Únete a más de 800 empresas que ya confían en Reclut para encontrar el mejor talento.
+                                Únete a más de 800 empresas que ya confían en Reclu para encontrar el mejor talento.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Link href="/registro">
@@ -379,10 +379,10 @@ export default function Home() {
                                     <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
                                         <span className="text-white font-bold text-sm">R</span>
                                     </div>
-                                    <span className="text-xl font-semibold text-white">Reclut</span>
+                                    <span className="text-xl font-semibold text-white">Reclu</span>
                                 </div>
                                 <p className="text-body text-[hsl(var(--gray-400))] max-w-sm">
-                                    La plataforma de reclutamiento con IA más avanzada de Latinoamérica.
+                                    La plataforma de reclutamiento más avanzada de Latinoamérica.
                                 </p>
                             </div>
 
@@ -410,7 +410,7 @@ export default function Home() {
                         {/* Bottom */}
                         <div className="pt-8 border-t border-[hsl(var(--gray-800))] flex flex-col md:flex-row justify-between items-center gap-4">
                             <p className="text-small text-[hsl(var(--gray-500))]">
-                                © 2024 Reclut. Todos los derechos reservados.
+                                © 2024 Reclu. Todos los derechos reservados.
                             </p>
                             <div className="flex gap-6">
                                 {["Privacidad", "Términos", "Cookies"].map((link, i) => (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,12 +10,85 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { User, Mail, Phone, MapPin, Briefcase, FileText, Plus, X, Save } from "lucide-react"
+import { User, Mail, Phone, MapPin, Briefcase, FileText, Plus, X, Save, Loader2 } from "lucide-react"
+import { auth, db } from "@/lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
+import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { useRouter } from "next/navigation"
 
 export default function PerfilPage() {
+    const [user, setUser] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
     const [editMode, setEditMode] = useState(false)
-    const [habilidades, setHabilidades] = useState(["React", "TypeScript", "Node.js", "AWS", "PostgreSQL"])
+    const [habilidades, setHabilidades] = useState<string[]>([])
     const [nuevaHabilidad, setNuevaHabilidad] = useState("")
+    const [saving, setSaving] = useState(false)
+    const router = useRouter()
+
+    // Form Stats
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        location: "",
+        title: "",
+        about: "",
+        experience: "",
+        salary: ""
+    })
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                const docRef = doc(db, "users", currentUser.uid)
+                const docSnap = await getDoc(docRef)
+                if (docSnap.exists()) {
+                    const data = docSnap.data()
+                    setUser(data)
+                    setFormData({
+                        firstName: data.firstName || "",
+                        lastName: data.lastName || "",
+                        email: data.email || currentUser.email || "",
+                        phone: data.phone || "",
+                        location: data.location || "",
+                        title: data.title || "",
+                        about: data.about || "",
+                        experience: data.experience || "",
+                        salary: data.salary || ""
+                    })
+                    if (data.skills) setHabilidades(data.skills)
+                }
+            } else {
+                router.push("/login")
+            }
+            setLoading(false)
+        })
+        return () => unsubscribe()
+    }, [router])
+
+    const handleSave = async () => {
+        if (!auth.currentUser) return
+        setSaving(true)
+        try {
+            const docRef = doc(db, "users", auth.currentUser.uid)
+            await updateDoc(docRef, {
+                ...formData,
+                skills: habilidades
+            })
+            // Update local user state
+            setUser({ ...user, ...formData, skills: habilidades })
+            setEditMode(false)
+        } catch (error) {
+            console.error("Error updating profile:", error)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value })
+    }
 
     const agregarHabilidad = () => {
         if (nuevaHabilidad.trim()) {
@@ -27,6 +100,8 @@ export default function PerfilPage() {
     const eliminarHabilidad = (index: number) => {
         setHabilidades(habilidades.filter((_, i) => i !== index))
     }
+
+    if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
 
     return (
         <div className="flex-1 bg-slate-50 dark:bg-slate-900/50">
@@ -55,27 +130,32 @@ export default function PerfilPage() {
                         <CardHeader>
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-20 w-20">
-                                    <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Usuario" />
-                                    <AvatarFallback>JD</AvatarFallback>
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${formData.firstName} ${formData.lastName}`} />
+                                    <AvatarFallback>{formData.firstName?.[0]}{formData.lastName?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
-                                    <CardTitle className="text-2xl">Juan Pérez Díaz</CardTitle>
-                                    <CardDescription className="text-base">Desarrollador Full Stack</CardDescription>
+                                    <CardTitle className="text-2xl">{formData.firstName} {formData.lastName}</CardTitle>
+                                    <CardDescription className="text-base">{formData.title || "Sin título profesional"}</CardDescription>
                                 </div>
-                                {editMode && (
-                                    <Button variant="outline" size="sm">
-                                        Cambiar Foto
-                                    </Button>
-                                )}
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="nombres">Nombre Completo</Label>
+                                    <Label htmlFor="firstName">Nombre</Label>
                                     <Input
-                                        id="nombres"
-                                        defaultValue="Juan Pérez Díaz"
+                                        id="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        disabled={!editMode}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName">Apellido</Label>
+                                    <Input
+                                        id="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
                                         disabled={!editMode}
                                     />
                                 </div>
@@ -85,40 +165,49 @@ export default function PerfilPage() {
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="email"
-                                            type="email"
-                                            defaultValue="juan.perez@email.com"
-                                            disabled={!editMode}
+                                            value={formData.email}
+                                            disabled={true} // Email usually not editable directly
                                             className="pl-10"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="telefono">Teléfono</Label>
+                                    <Label htmlFor="phone">Teléfono</Label>
                                     <div className="relative">
                                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
-                                            id="telefono"
-                                            defaultValue="+52 55 1234 5678"
+                                            id="phone"
+                                            value={formData.phone}
+                                            onChange={handleChange}
                                             disabled={!editMode}
                                             className="pl-10"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="ubicacion">Ubicación</Label>
+                                    <Label htmlFor="location">Ubicación</Label>
                                     <div className="relative">
                                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Select disabled={!editMode} defaultValue="cdmx">
-                                            <SelectTrigger className="pl-10">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="cdmx">Ciudad de México</SelectItem>
-                                                <SelectItem value="gdl">Guadalajara</SelectItem>
-                                                <SelectItem value="mty">Monterrey</SelectItem>
-                                                <SelectItem value="remoto">Remoto</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <Input
+                                            id="location"
+                                            value={formData.location}
+                                            onChange={handleChange}
+                                            disabled={!editMode}
+                                            className="pl-10"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="title">Título Profesional</Label>
+                                    <div className="relative">
+                                        <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="title"
+                                            value={formData.title}
+                                            onChange={handleChange}
+                                            disabled={!editMode}
+                                            className="pl-10"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -133,8 +222,10 @@ export default function PerfilPage() {
                         </CardHeader>
                         <CardContent>
                             <Textarea
+                                id="about"
+                                value={formData.about}
+                                onChange={handleChange}
                                 placeholder="Escribe una breve descripción sobre ti..."
-                                defaultValue="Desarrollador Full Stack con 5+ años de experiencia en tecnologías web modernas. Apasionado por crear productos escalables y con excelente UX. Busco oportunidades para trabajar en equipos dinámicos que valoren la innovación y el aprendizaje continuo."
                                 disabled={!editMode}
                                 rows={4}
                             />
@@ -179,85 +270,14 @@ export default function PerfilPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Experiencia Laboral */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle>Experiencia Laboral</CardTitle>
-                                    <CardDescription>Tu historial profesional</CardDescription>
-                                </div>
-                                {editMode && (
-                                    <Button variant="outline" size="sm">
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Agregar
-                                    </Button>
-                                )}
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            {[
-                                {
-                                    cargo: "Senior Full Stack Developer",
-                                    empresa: "Tech Innovations SA",
-                                    periodo: "Ene 2022 - Presente",
-                                    descripcion: "Desarrollo de aplicaciones web escalables usando React, Node.js y AWS. Liderazgo técnico de equipo de 4 developers."
-                                },
-                                {
-                                    cargo: "Full Stack Developer",
-                                    empresa: "Digital Solutions",
-                                    periodo: "Mar 2019 - Dic 2021",
-                                    descripcion: "Implementación de features para plataforma SaaS B2B. Stack: React, Express, PostgreSQL, Docker."
-                                }
-                            ].map((exp, i) => (
-                                <div key={i} className="relative pl-6 pb-6 border-l-2 border-muted last:pb-0">
-                                    <div className="absolute -left-2 top-0 h-4 w-4 rounded-full bg-blue-600 border-2 border-background" />
-                                    <div className="space-y-1">
-                                        <h4 className="font-semibold text-lg">{exp.cargo}</h4>
-                                        <p className="text-sm text-muted-foreground">{exp.empresa}</p>
-                                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                            <Briefcase className="h-3.5 w-3.5" />
-                                            {exp.periodo}
-                                        </p>
-                                        <p className="text-sm pt-2">{exp.descripcion}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-
-                    {/* CV/Currículum */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Currículum Vitae</CardTitle>
-                            <CardDescription>Sube tu CV en formato PDF</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between p-4 border rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="h-8 w-8 text-blue-600" />
-                                    <div>
-                                        <p className="font-medium">Juan_Perez_CV.pdf</p>
-                                        <p className="text-sm text-muted-foreground">Actualizado el 1 de Feb, 2024</p>
-                                    </div>
-                                </div>
-                                {editMode && (
-                                    <Button variant="outline" size="sm">
-                                        Reemplazar
-                                    </Button>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
                     {/* Save Button */}
                     {editMode && (
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setEditMode(false)}>
+                            <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>
                                 Cancelar
                             </Button>
-                            <Button onClick={() => setEditMode(false)} className="gap-2">
-                                <Save className="h-4 w-4" />
+                            <Button onClick={handleSave} className="gap-2" disabled={saving}>
+                                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Guardar Cambios
                             </Button>
                         </div>

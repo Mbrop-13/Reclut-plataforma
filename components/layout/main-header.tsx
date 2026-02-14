@@ -88,7 +88,7 @@ export function MainHeader() {
                             <span className="text-white font-bold text-lg">R</span>
                         </div>
                         <span className={`text-xl font-bold tracking-tight hidden sm:block ${scrolled ? "text-slate-900" : "text-slate-900"}`}>
-                            Re<span className="text-[#1890ff]">clut</span>
+                            Re<span className="text-[#1890ff]">clu</span>
                         </span>
                     </Link>
 

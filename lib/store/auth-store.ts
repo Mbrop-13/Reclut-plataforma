@@ -23,7 +23,7 @@ interface AuthState {
     isAuthenticated: boolean
     isLoading: boolean
     login: (email: string, password: string) => Promise<void>
-    signup: (email: string, password: string, role: UserRole) => Promise<void>
+    signup: (email: string, password: string, role: UserRole, additionalData?: any) => Promise<void>
     logout: () => Promise<void>
     setUser: (user: User | null) => void
 }
@@ -45,13 +45,27 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
     },
 
-    signup: async (email, password, role) => {
+    signup: async (email, password, role, additionalData = {}) => {
         if (!auth) throw new Error("Firebase Auth not initialized")
         set({ isLoading: true })
         try {
+            const { createUserWithEmailAndPassword } = await import('firebase/auth')
+            const { doc, setDoc } = await import('firebase/firestore')
+            const { db } = await import('@/lib/firebase')
+
             const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-            // Here you would typically save the role to Firestore
-            // For now, we rely on the state update, but role persistence needs a DB
+            const user = userCredential.user
+
+            // Save user profile to Firestore
+            if (db) {
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    role: role,
+                    createdAt: new Date().toISOString(),
+                    ...additionalData
+                })
+            }
         } catch (error) {
             set({ isLoading: false })
             throw error

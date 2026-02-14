@@ -221,9 +221,9 @@ export default function CompletarPerfilPage() {
             <div className="w-full max-w-3xl mb-8 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="w-10 h-10 rounded-xl bg-[#1890ff] flex items-center justify-center">
-                        <span className="text-white font-bold">T</span>
+                        <span className="text-white font-bold">R</span>
                     </div>
-                    <span className="text-xl font-bold text-[hsl(var(--gray-900))]">TalentAI</span>
+                    <span className="text-xl font-bold text-[hsl(var(--gray-900))]">Reclu</span>
                 </div>
                 <div className="text-sm font-medium text-[hsl(var(--gray-500))]">
                     Configuración Inicial

@@ -62,7 +62,7 @@ Requirements: ${requirements}`;
             headers: {
                 "Authorization": `Bearer ${apiKey}`,
                 "HTTP-Referer": "https://reclut.ai", // Required by OpenRouter
-                "X-Title": "Reclut AI", // Optional
+                "X-Title": "Reclu", // Optional
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({

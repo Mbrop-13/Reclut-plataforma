@@ -33,24 +33,25 @@ export default function EmpresaDashboard() {
     const [recentApplications, setRecentApplications] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [companyName, setCompanyName] = useState("Empresa")
+    const [plan, setPlan] = useState("Plan Gratuito")
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
-                    // Fetch basic stats (Mock implementation for structure, implies collections exist)
-                    // In a real scenario, you would query 'jobs' where companyId == user.uid
-                    // and 'applications' where companyId == user.uid
+                    // Fetch user/company data
+                    const userDoc = await import("firebase/firestore").then(m => m.getDoc(m.doc(db, "users", user.uid)))
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data()
+                        setCompanyName(userData.companyName || "Empresa")
+                        setPlan(userData.plan || "Plan Gratuito")
+                    }
 
-                    // For now, initialized to 0 as requested to remove fake data
-                    // We will implement the actual fetch logic once the creation flows are ready
-                    // const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", user.uid));
-                    // const jobsSnapshot = await getDocs(jobsQuery);
-                    // ... 
+                    // Real stats fetching would go here. For now, we keep it safe with 0s but remove mock comments.
+                    // We can expand this to query Firestore 'jobs' and 'applications' collections later.
 
-                    // Leaving as 0 to reflect "Clean State"
                 } catch (error) {
-                    console.error("Error fetching stats:", error)
+                    console.error("Error fetching data:", error)
                 } finally {
                     setLoading(false)
                 }
@@ -71,16 +72,8 @@ export default function EmpresaDashboard() {
     return (
         <div className="min-h-screen bg-[hsl(var(--gray-50))] flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-[hsl(var(--gray-200))] flex flex-col fixed h-full">
-                {/* Logo */}
-                <div className="p-6 border-b border-[hsl(var(--gray-200))]">
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">T</span>
-                        </div>
-                        <span className="text-xl font-semibold text-[hsl(var(--gray-900))]">TalentAI</span>
-                    </Link>
-                </div>
+            <aside className="w-64 bg-white border-r border-[hsl(var(--gray-200))] flex flex-col fixed h-full z-10 pt-16">
+
 
                 {/* Company Info */}
                 <div className="p-4 border-b border-[hsl(var(--gray-200))]">
@@ -88,32 +81,64 @@ export default function EmpresaDashboard() {
                         <div className="w-10 h-10 rounded-lg bg-[#1890ff] flex items-center justify-center">
                             <Building2 className="w-5 h-5 text-white" />
                         </div>
-                        <div>
-                            <p className="text-body font-medium text-[hsl(var(--gray-900))]">{companyName}</p>
-                            <p className="text-small text-[hsl(var(--gray-500))]">Plan Gratuito</p>
+                        <div className="overflow-hidden">
+                            <p className="text-body font-medium text-[hsl(var(--gray-900))] truncate">{companyName}</p>
+                            <p className="text-small text-[hsl(var(--gray-500))]">{plan}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-1">
-                    {NAV_ITEMS.map((item) => (
-                        <Link
-                            key={item.label}
-                            href={item.href}
-                            className={item.active ? 'nav-item-active' : 'nav-item'}
-                        >
-                            <item.icon className="w-5 h-5" />
-                            {item.label}
-                        </Link>
-                    ))}
+                    <Link
+                        href="/empresas/dashboard"
+                        className={'nav-item-active'}
+                    >
+                        <Home className="w-5 h-5" />
+                        Inicio
+                    </Link>
+                    <Link
+                        href="/empresas/mis-publicaciones"
+                        className={'nav-item'}
+                    >
+                        <Plus className="w-5 h-5" />
+                        Publicar Empleo
+                    </Link>
+                    <Link
+                        href="/empresas/mis-publicaciones"
+                        className={'nav-item'}
+                    >
+                        <Briefcase className="w-5 h-5" />
+                        Mis Vacantes
+                    </Link>
+                    <Link
+                        href="/empresas/candidatos"
+                        className={'nav-item'}
+                    >
+                        <Users className="w-5 h-5" />
+                        Candidatos
+                    </Link>
+                    <Link
+                        href="/empresas/entrevistas"
+                        className={'nav-item'}
+                    >
+                        <Play className="w-5 h-5" />
+                        Entrevistas IA
+                    </Link>
+                    <Link
+                        href="/empresas/configuracion"
+                        className={'nav-item'}
+                    >
+                        <Settings className="w-5 h-5" />
+                        Configuración
+                    </Link>
                 </nav>
 
                 {/* Usage / Plan CTA */}
                 <div className="p-4 border-t border-[hsl(var(--gray-200))]">
                     <div className="p-4 bg-[hsl(var(--primary-light))] rounded-lg border border-[#1890ff]/20">
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-small font-semibold text-[#1890ff]">Plan Gratuito</p>
+                            <p className="text-small font-semibold text-[#1890ff]">{plan}</p>
                             <span className="text-[10px] bg-white text-[#1890ff] px-2 py-0.5 rounded-full border border-[#1890ff]/20">
                                 Básico
                             </span>
@@ -123,16 +148,7 @@ export default function EmpresaDashboard() {
                             <div>
                                 <div className="flex justify-between text-[11px] text-[hsl(var(--gray-600))] mb-1">
                                     <span>Vacantes</span>
-                                    <span>0 / 0</span>
-                                </div>
-                                <div className="w-full bg-white rounded-full h-1.5 overflow-hidden">
-                                    <div className="bg-[#1890ff] h-1.5 rounded-full w-0" />
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between text-[11px] text-[hsl(var(--gray-600))] mb-1">
-                                    <span>Entrevistas</span>
-                                    <span>0 / 0</span>
+                                    <span>{stats.activeJobs} / 3</span>
                                 </div>
                                 <div className="w-full bg-white rounded-full h-1.5 overflow-hidden">
                                     <div className="bg-[#1890ff] h-1.5 rounded-full w-0" />

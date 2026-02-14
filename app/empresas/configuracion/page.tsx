@@ -32,11 +32,11 @@ export default function ConfiguracionPage() {
         contactEmail: ""
     })
 
-    // Plan State (Mock for now, would come from Stripe/Firestore)
+    // Plan State
     const [plan, setPlan] = useState({
-        name: "Plan Pro",
+        name: "Plan Gratuito",
         status: "active",
-        nextBilling: "2024-05-01"
+        nextBilling: "-"
     })
 
     useEffect(() => {
@@ -48,6 +48,15 @@ export default function ConfiguracionPage() {
                     if (userDoc.exists()) {
                         const userData = userDoc.data()
                         setCompanySlug(userData.companySlug)
+
+                        // Update Plan if available in user data
+                        if (userData.plan) {
+                            setPlan({
+                                name: userData.plan,
+                                status: "active",
+                                nextBilling: "-" // Retrieve from billing provider if exists
+                            })
+                        }
 
                         if (userData.companySlug) {
                             const companyDoc = await getDoc(doc(db, "companies", userData.companySlug))

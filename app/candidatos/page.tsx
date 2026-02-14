@@ -1,5 +1,4 @@
-"use client"
-
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -7,6 +6,10 @@ import {
     Home, Briefcase, FileText, Play, User, Settings, LogOut,
     TrendingUp, Eye, Clock, CheckCircle2, ChevronRight
 } from "lucide-react"
+import { auth, db } from "@/lib/firebase"
+import { onAuthStateChanged, signOut } from "firebase/auth"
+import { doc, getDoc } from "firebase/firestore"
+import { useRouter } from "next/navigation"
 
 const NAV_ITEMS = [
     { icon: Home, label: "Inicio", href: "/candidatos", active: true },
@@ -31,6 +34,35 @@ const EMPLEOS_RECOMENDADOS = [
 ]
 
 export default function CandidatoDashboard() {
+    const [user, setUser] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const router = useRouter()
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                const docRef = doc(db, "users", currentUser.uid)
+                const docSnap = await getDoc(docRef)
+                if (docSnap.exists()) {
+                    setUser(docSnap.data())
+                }
+            } else {
+                router.push("/login")
+            }
+            setLoading(false)
+        })
+        return () => unsubscribe()
+    }, [router])
+
+    const handleSignOut = async () => {
+        await signOut(auth)
+        router.push("/")
+    }
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center bg-gray-50">Cargando...</div>
+    }
+
     return (
         <div className="min-h-screen bg-[hsl(var(--gray-50))] flex">
             {/* Sidebar */}
@@ -41,21 +73,23 @@ export default function CandidatoDashboard() {
                         <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
                             <span className="text-white font-bold text-sm">T</span>
                         </div>
-                        <span className="text-xl font-semibold text-[hsl(var(--gray-900))]">TalentAI</span>
+                        <span className="text-xl font-semibold text-[hsl(var(--gray-900))]">Reclu</span>
                     </Link>
                 </div>
 
                 {/* User Info */}
                 <div className="p-4 border-b border-[hsl(var(--gray-200))]">
                     <div className="flex items-center gap-3">
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=John"
-                            alt="Avatar"
-                            className="w-10 h-10 rounded-full border border-[hsl(var(--gray-200))]"
-                        />
+                        <div className="w-10 h-10 rounded-full bg-[#1890ff] flex items-center justify-center text-white font-bold text-lg">
+                            {user?.firstName?.charAt(0) || user?.email?.charAt(0) || "U"}
+                        </div>
                         <div>
-                            <p className="text-body font-medium text-[hsl(var(--gray-900))]">Juan Pérez</p>
-                            <p className="text-small text-[hsl(var(--gray-500))]">Full Stack Developer</p>
+                            <p className="text-body font-medium text-[hsl(var(--gray-900))]">
+                                {user?.firstName ? `${user.firstName} ${user.lastName}` : "Usuario"}
+                            </p>
+                            <p className="text-small text-[hsl(var(--gray-500))] truncate w-32">
+                                {user?.title || "Candidato"}
+                            </p>
                         </div>
                     </div>
                 </div>

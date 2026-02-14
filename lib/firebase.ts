@@ -3,6 +3,7 @@ import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
 import { getFunctions, Functions, connectFunctionsEmulator } from "firebase/functions";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -16,15 +17,10 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-// @ts-ignore
 let db: Firestore;
-// @ts-ignore
 let auth: Auth;
-// @ts-ignore
 let storage: FirebaseStorage;
-// @ts-ignore
 let analytics: Analytics;
-// @ts-ignore
 let functions: Functions;
 
 try {
@@ -53,4 +49,4 @@ if (typeof window !== "undefined") {
     });
 }
 
-export { app, db, auth, storage, analytics };
+export { app, db, auth, storage, analytics, functions };
