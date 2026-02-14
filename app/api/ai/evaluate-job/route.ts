@@ -61,7 +61,7 @@ Requirements: ${requirements}`;
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${apiKey}`,
-                "HTTP-Referer": "https://reclut.ai", // Required by OpenRouter
+                "HTTP-Referer": "https://reclu.ai", // Required by OpenRouter
                 "X-Title": "Reclu", // Optional
                 "Content-Type": "application/json"
             },

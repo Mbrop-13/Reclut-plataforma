@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -71,7 +73,7 @@ export default function CandidatoDashboard() {
                 <div className="p-6 border-b border-[hsl(var(--gray-200))]">
                     <Link href="/" className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">T</span>
+                            <span className="text-white font-bold text-sm">R</span>
                         </div>
                         <span className="text-xl font-semibold text-[hsl(var(--gray-900))]">Reclu</span>
                     </Link>
