@@ -196,89 +196,91 @@ export default function Home() {
                         </motion.p>
                     </motion.div>
 
-                    {[
-                        {
-                            name: "Básico", price: "$99", period: "/mes",
-                            desc: "Perfecto para startups y empresas pequeñas",
-                            features: ["20 entrevistas con IA/mes", "Scoring automático", "2 vacantes activas", "1 usuario"],
-                            popular: false
-                        },
-                        {
-                            name: "Starter", price: "$199", period: "/mes",
-                            desc: "El más popular para PyMEs",
-                            features: ["50 entrevistas con IA/mes", "Auto-scheduling", "5 vacantes activas", "3 usuarios", "Soporte prioritario"],
-                            popular: true
-                        },
-                        {
-                            name: "Professional", price: "$599", period: "/mes",
-                            desc: "Para empresas en crecimiento",
-                            features: ["200 entrevistas con IA/mes", "Analytics avanzado", "15 vacantes activas", "5 usuarios", "Integraciones ATS"],
-                            popular: false
-                        }
-                    ].map((plan, i) => (
-                        <motion.div
-                            key={i}
-                            variants={fadeIn}
-                            className={`relative rounded-2xl p-8 transition-all flex flex-col ${plan.popular
-                                ? "bg-white border-2 border-[#1890ff] shadow-xl shadow-blue-500/10 scale-[1.02] z-10"
-                                : "bg-white border border-slate-200 hover:border-slate-300 hover:shadow-lg"
-                                }`}
-                        >
-                            {plan.popular && (
-                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                                    <span className="px-4 py-1.5 rounded-full bg-[#1890ff] text-white text-xs font-bold shadow-lg">
-                                        Más Popular
-                                    </span>
+                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid md:grid-cols-3 gap-6 lg:gap-8">
+                        {[
+                            {
+                                name: "Básico", price: "$99", period: "/mes",
+                                desc: "Perfecto para startups y empresas pequeñas",
+                                features: ["20 entrevistas con IA/mes", "Scoring automático", "2 vacantes activas", "1 usuario"],
+                                popular: false
+                            },
+                            {
+                                name: "Starter", price: "$199", period: "/mes",
+                                desc: "El más popular para PyMEs",
+                                features: ["50 entrevistas con IA/mes", "Auto-scheduling", "5 vacantes activas", "3 usuarios", "Soporte prioritario"],
+                                popular: true
+                            },
+                            {
+                                name: "Professional", price: "$599", period: "/mes",
+                                desc: "Para empresas en crecimiento",
+                                features: ["200 entrevistas con IA/mes", "Analytics avanzado", "15 vacantes activas", "5 usuarios", "Integraciones ATS"],
+                                popular: false
+                            }
+                        ].map((plan, i) => (
+                            <motion.div
+                                key={i}
+                                variants={fadeIn}
+                                className={`relative rounded-2xl p-8 transition-all flex flex-col ${plan.popular
+                                    ? "bg-white border-2 border-[#1890ff] shadow-xl shadow-blue-500/10 scale-[1.02] z-10"
+                                    : "bg-white border border-slate-200 hover:border-slate-300 hover:shadow-lg"
+                                    }`}
+                            >
+                                {plan.popular && (
+                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                                        <span className="px-4 py-1.5 rounded-full bg-[#1890ff] text-white text-xs font-bold shadow-lg">
+                                            Más Popular
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="text-center mb-8">
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-2">{plan.name}</h3>
+                                    <div className="flex items-baseline justify-center gap-1">
+                                        <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
+                                        <span className="text-slate-500">{plan.period}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-500 mt-2">{plan.desc}</p>
                                 </div>
-                            )}
 
-                            <div className="text-center mb-8">
-                                <h3 className="text-lg font-semibold text-slate-900 mb-2">{plan.name}</h3>
-                                <div className="flex items-baseline justify-center gap-1">
-                                    <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
-                                    <span className="text-slate-500">{plan.period}</span>
-                                </div>
-                                <p className="text-sm text-slate-500 mt-2">{plan.desc}</p>
-                            </div>
+                                <ul className="space-y-3 mb-8 flex-1">
+                                    {plan.features.map((f, j) => (
+                                        <li key={j} className="flex items-center gap-3 text-sm text-slate-700">
+                                            <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                            {f}
+                                        </li>
+                                    ))}
+                                </ul>
 
-                            <ul className="space-y-3 mb-8 flex-1">
-                                {plan.features.map((f, j) => (
-                                    <li key={j} className="flex items-center gap-3 text-sm text-slate-700">
-                                        <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
+                                <Link href="/registro/empresa" className="mt-auto">
+                                    <Button className={`w-full h-12 rounded-xl font-semibold ${plan.popular
+                                        ? "bg-[#1890ff] hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                                        : "bg-slate-100 hover:bg-slate-200 text-slate-900"
+                                        }`}>
+                                        Comenzar
+                                    </Button>
+                                </Link>
+                            </motion.div>
+                        ))}
+                    </motion.div>
 
-                            <Link href="/registro/empresa" className="mt-auto">
-                                <Button className={`w-full h-12 rounded-xl font-semibold ${plan.popular
-                                    ? "bg-[#1890ff] hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                                    : "bg-slate-100 hover:bg-slate-200 text-slate-900"
-                                    }`}>
-                                    Comenzar
-                                </Button>
+                    {/* Custom Plan Option */}
+                    <motion.div
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                        variants={fadeIn}
+                        className="mt-12 text-center"
+                    >
+                        <div className="inline-flex items-center gap-2 p-1 pl-4 bg-white rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                            <span className="text-sm font-medium text-slate-700">¿Necesitas un plan a medida?</span>
+                            <Link href="/soporte">
+                                <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-900 text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer">
+                                    Contáctanos
+                                </span>
                             </Link>
-                        </motion.div>
-                    ))}
-                </motion.div>
-
-                {/* Custom Plan Option */}
-                <motion.div
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={fadeIn}
-                    className="mt-12 text-center"
-                >
-                    <div className="inline-flex items-center gap-2 p-1 pl-4 bg-white rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <span className="text-sm font-medium text-slate-700">¿Necesitas un plan a medida?</span>
-                        <Link href="/soporte">
-                            <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-900 text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer">
-                                Contáctanos
-                            </span>
-                        </Link>
-                    </div>
-                </motion.div>
+                        </div>
+                    </motion.div>
+                </div>
             </section>
 
             {/* ═══════════════ CTA FINAL ═══════════════ */}
