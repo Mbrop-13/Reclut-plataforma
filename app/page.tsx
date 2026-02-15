@@ -279,11 +279,10 @@ export default function Home() {
                         </Link>
                     </div>
                 </motion.div>
-        </div>
-            </section >
+            </section>
 
-        {/* ═══════════════ CTA FINAL ═══════════════ */ }
-        < section className = "relative py-28 bg-slate-50" >
+            {/* ═══════════════ CTA FINAL ═══════════════ */}
+            <section className="relative py-28 bg-slate-50">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-[#1890ff]/[0.04] blur-[120px]" />
                 <div className="relative z-10 max-w-3xl mx-auto px-6 lg:px-8 text-center">
                     <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -309,52 +308,52 @@ export default function Home() {
                         </div>
                     </motion.div>
                 </div>
-            </section >
+            </section>
 
-        {/* ═══════════════ FOOTER ═══════════════ */ }
-        < footer className = "bg-white border-t border-slate-200" >
-            <div className="max-w-6xl mx-auto px-6 lg:px-8 py-16">
-                <div className="grid md:grid-cols-5 gap-8 mb-12">
-                    <div className="md:col-span-2">
-                        <div className="flex items-center gap-2.5 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">R</span>
+            {/* ═══════════════ FOOTER ═══════════════ */}
+            <footer className="bg-white border-t border-slate-200">
+                <div className="max-w-6xl mx-auto px-6 lg:px-8 py-16">
+                    <div className="grid md:grid-cols-5 gap-8 mb-12">
+                        <div className="md:col-span-2">
+                            <div className="flex items-center gap-2.5 mb-4">
+                                <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
+                                    <span className="text-white font-bold text-sm">R</span>
+                                </div>
+                                <span className="text-xl font-bold text-slate-900">Re<span className="text-[#1890ff]">clut</span></span>
                             </div>
-                            <span className="text-xl font-bold text-slate-900">Re<span className="text-[#1890ff]">clut</span></span>
+                            <p className="text-sm text-slate-500 max-w-xs leading-relaxed">
+                                La plataforma de reclutamiento con IA más avanzada de Latinoamérica.
+                            </p>
                         </div>
-                        <p className="text-sm text-slate-500 max-w-xs leading-relaxed">
-                            La plataforma de reclutamiento con IA más avanzada de Latinoamérica.
-                        </p>
-                    </div>
-                    {[
-                        { title: "Producto", links: ["Características", "Precios", "Integraciones"] },
-                        { title: "Recursos", links: ["Blog", "Guías", "API Docs"] },
-                        { title: "Empresa", links: ["Nosotros", "Carreras", "Contacto"] }
-                    ].map((section, i) => (
-                        <div key={i}>
-                            <h4 className="text-sm font-semibold text-slate-900 mb-4">{section.title}</h4>
-                            <ul className="space-y-2.5">
-                                {section.links.map((link, j) => (
-                                    <li key={j}>
-                                        <Link href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-                                            {link}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
-                <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-xs text-slate-400">© {new Date().getFullYear()} Reclut. Todos los derechos reservados.</p>
-                    <div className="flex gap-6">
-                        {["Privacidad", "Términos", "Cookies"].map((link, i) => (
-                            <Link key={i} href="#" className="text-xs text-slate-400 hover:text-slate-700 transition-colors">{link}</Link>
+                        {[
+                            { title: "Producto", links: ["Características", "Precios", "Integraciones"] },
+                            { title: "Recursos", links: ["Blog", "Guías", "API Docs"] },
+                            { title: "Empresa", links: ["Nosotros", "Carreras", "Contacto"] }
+                        ].map((section, i) => (
+                            <div key={i}>
+                                <h4 className="text-sm font-semibold text-slate-900 mb-4">{section.title}</h4>
+                                <ul className="space-y-2.5">
+                                    {section.links.map((link, j) => (
+                                        <li key={j}>
+                                            <Link href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+                                                {link}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         ))}
                     </div>
+                    <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <p className="text-xs text-slate-400">© {new Date().getFullYear()} Reclut. Todos los derechos reservados.</p>
+                        <div className="flex gap-6">
+                            {["Privacidad", "Términos", "Cookies"].map((link, i) => (
+                                <Link key={i} href="#" className="text-xs text-slate-400 hover:text-slate-700 transition-colors">{link}</Link>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </footer >
-    </div >
+            </footer>
+        </div>
     )
 }
