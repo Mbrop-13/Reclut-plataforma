@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Briefcase, Building2, ArrowRight } from "lucide-react"
+import { Briefcase, Building2, ArrowRight, ArrowLeft } from "lucide-react"
 
 export default function RegistroPage() {
     return (
@@ -16,6 +16,15 @@ export default function RegistroPage() {
                 transition={{ duration: 0.4 }}
                 className="relative w-full max-w-2xl"
             >
+                {/* Back Button */}
+                <Link
+                    href="/login"
+                    className="absolute -top-12 left-0 inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Volver a iniciar sesión
+                </Link>
+
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center gap-2 mb-6">

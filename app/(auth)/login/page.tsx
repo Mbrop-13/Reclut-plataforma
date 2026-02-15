@@ -13,6 +13,7 @@ import { useAuthStore } from "@/lib/store/auth-store"
 import { toast } from "sonner"
 import { db, auth } from "@/lib/firebase"
 import { doc, getDoc } from "firebase/firestore"
+import { ArrowLeft } from "lucide-react"
 
 export default function LoginPage() {
     const [email, setEmail] = useState("")
@@ -81,6 +82,15 @@ export default function LoginPage() {
                 transition={{ duration: 0.4 }}
                 className="relative w-full max-w-md"
             >
+                {/* Back Button */}
+                <Link
+                    href="/"
+                    className="absolute -top-12 left-0 inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Volver al inicio
+                </Link>
+
                 {/* Card */}
                 <div className="bg-white rounded-xl shadow-2xl border border-[hsl(var(--gray-200))] p-10">
                     {/* Logo */}
