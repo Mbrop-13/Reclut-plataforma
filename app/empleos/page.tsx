@@ -13,6 +13,7 @@ import {
 import { EMPLEOS } from "@/lib/mock-data"
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { LocationInput } from "@/components/ui/location-input"
 
 const FILTROS = {
     modalidad: {
@@ -252,12 +253,12 @@ export default function EmpleosPage() {
                                 />
                             </div>
                             <div className="relative flex-1 sm:border-l border-slate-200 sm:pl-3">
-                                <MapPin className="absolute left-4 sm:left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <Input
-                                    placeholder="Ciudad o región..."
+                                <MapPin className="absolute left-4 sm:left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
+                                <LocationInput
+                                    placeholder="Ciudad, región o comuna..."
                                     value={locationQuery}
-                                    onChange={(e) => setLocationQuery(e.target.value)}
-                                    className="w-full pl-12 sm:pl-14 h-13 bg-slate-50 border-none rounded-xl text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-[#1890ff] text-base"
+                                    onChange={setLocationQuery}
+                                    className="w-full pl-12 sm:pl-14 h-13 bg-slate-50 border-none rounded-xl text-slate-900 shadow-none hover:bg-slate-100/80 text-base"
                                 />
                             </div>
                             <Button className="h-13 px-8 rounded-xl bg-[#1890ff] hover:bg-blue-600 text-white font-semibold text-base shadow-lg shadow-blue-500/25 whitespace-nowrap">
