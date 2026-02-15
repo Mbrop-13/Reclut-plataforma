@@ -87,31 +87,34 @@ export function MainHeader() {
             >
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <div className="flex items-center justify-between h-[72px]">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-xl bg-[#1890ff] flex items-center justify-center shadow-lg shadow-[#1890ff]/25 group-hover:shadow-[#1890ff]/40 transition-shadow">
-                                <span className="text-white font-bold text-lg">R</span>
-                            </div>
-                            <span className="text-xl font-bold tracking-tight text-slate-900">
-                                Re<span className="text-[#1890ff]">clut</span>
-                            </span>
-                        </Link>
+                        {/* Left Section: Logo + Nav */}
+                        <div className="flex items-center gap-8">
+                            {/* Logo */}
+                            <Link href="/" className="flex items-center gap-2.5 group">
+                                <div className="w-9 h-9 rounded-xl bg-[#1890ff] flex items-center justify-center shadow-lg shadow-[#1890ff]/25 group-hover:shadow-[#1890ff]/40 transition-shadow">
+                                    <span className="text-white font-bold text-lg">R</span>
+                                </div>
+                                <span className="text-xl font-bold tracking-tight text-slate-900">
+                                    Re<span className="text-[#1890ff]">clu</span>
+                                </span>
+                            </Link>
 
-                        {/* Desktop Nav */}
-                        <nav className="hidden md:flex items-center gap-1">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${pathname === link.href
-                                        ? "text-[#1890ff] bg-blue-50/80"
-                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                                        }`}
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </nav>
+                            {/* Desktop Nav */}
+                            <nav className="hidden md:flex items-center gap-1">
+                                {navLinks.map((link) => (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${pathname === link.href
+                                            ? "text-[#1890ff] bg-blue-50/80"
+                                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                            }`}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                ))}
+                            </nav>
+                        </div>
 
                         {/* Right Section */}
                         <div className="flex items-center gap-3">

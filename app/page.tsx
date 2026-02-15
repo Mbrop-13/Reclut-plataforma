@@ -33,24 +33,24 @@ export default function Home() {
                         <motion.div variants={fadeIn}>
                             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-[#1890ff] text-sm font-medium">
                                 <Sparkles className="w-4 h-4" />
-                                Plataforma potenciada por IA
+                                La nueva era del reclutamiento
                             </span>
                         </motion.div>
 
                         {/* Headline */}
                         <motion.h1 variants={fadeIn} className="text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 tracking-tight leading-[1.1]">
-                            Reclutamiento{" "}
+                            Conecta con el mejor{" "}
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1890ff] via-blue-500 to-indigo-500">
-                                inteligente
+                                talento profesional
                             </span>
                             <br />
-                            para el futuro del trabajo
+                            de forma ágil y efectiva
                         </motion.h1>
 
                         {/* Sub */}
                         <motion.p variants={fadeIn} className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-                            Conecta talento con oportunidades usando entrevistas con avatares de IA,
-                            evaluaciones automáticas y matching inteligente.
+                            Optimiza tus procesos de selección con herramientas avanzadas diseñadas
+                            para encontrar al candidato ideal en tiempo récord.
                         </motion.p>
 
                         {/* CTAs */}
