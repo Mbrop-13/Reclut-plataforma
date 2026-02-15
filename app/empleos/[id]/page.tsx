@@ -11,7 +11,7 @@ import {
     Calendar, Globe, Loader2, BrainCircuit, Sparkles, Check, Clock, FileText
 } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { doc, getDoc, addDoc, collection, updateDoc, serverTimestamp } from "firebase/firestore"
+import { doc, getDoc, addDoc, collection, updateDoc, serverTimestamp, query, where, getDocs, getCountFromServer } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
 import { toast } from "sonner"
@@ -33,6 +33,7 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     const [analysisProgress, setAnalysisProgress] = useState(0)
     const [aiScore, setAiScore] = useState<number | null>(null)
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+    const [isLimitReached, setIsLimitReached] = useState(false)
 
 
 
@@ -96,12 +97,31 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     }, [params.id])
 
 
-    const handleApplyClick = () => {
+    const handleApplyClick = async () => {
         if (!currentUser) {
             toast.error("Debes iniciar sesión para postularte")
             router.push("/login")
             return
         }
+
+        // Check applicant limit before opening modal
+        if (job.maxApplicants) {
+            try {
+                const appsQuery = query(
+                    collection(db, "applications"),
+                    where("jobId", "==", job.id)
+                )
+                const appsSnapshot = await getDocs(appsQuery)
+                if (appsSnapshot.size >= job.maxApplicants) {
+                    setIsLimitReached(true)
+                    toast.error("Esta vacante ya alcanzó el límite de postulantes")
+                    return
+                }
+            } catch (error) {
+                console.error("Error checking applicant limit:", error)
+            }
+        }
+
         setIsApplicationOpen(true)
         startApplicationProcess()
     }
@@ -122,6 +142,21 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
         }, 500)
 
         try {
+            // 0. Double-check applicant limit
+            if (job.maxApplicants) {
+                const countQuery = query(
+                    collection(db, "applications"),
+                    where("jobId", "==", job.id)
+                )
+                const countSnapshot = await getDocs(countQuery)
+                if (countSnapshot.size >= job.maxApplicants) {
+                    setIsLimitReached(true)
+                    setIsApplicationOpen(false)
+                    toast.error("Esta vacante ya alcanzó el límite de postulantes")
+                    return
+                }
+            }
+
             // 1. Create Application
             const candidateDoc = await getDoc(doc(db, "users", currentUser.uid))
             const candidateProfile = candidateDoc.exists() ? { ...candidateDoc.data(), id: currentUser.uid, name: candidateDoc.data().displayName || currentUser.email } : { id: currentUser.uid, name: currentUser.email, email: currentUser.email }
@@ -138,7 +173,19 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                 aiScore: null
             })
 
-            // 2. Trigger AI Scoring
+            // 2. For free plan jobs: skip AI scoring entirely
+            const isFreeJob = job.planType === "free"
+
+            if (isFreeJob) {
+                clearInterval(interval)
+                setAnalysisProgress(100)
+                setTimeout(() => {
+                    setAppStep('success_standard')
+                }, 800)
+                return
+            }
+
+            // 3. Trigger AI Scoring (paid plans only)
             const aiResponse = await fetch('/api/ai/score', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -159,10 +206,9 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                 clearInterval(interval)
                 setAnalysisProgress(100)
 
-                // 3. Determine Next Step based on Score
+                // 4. Determine Next Step based on Score
                 const minScore = job.minScore || 70
 
-                // Demo Delay for UX
                 setTimeout(() => {
                     if (score >= minScore && job.enableAvatarInterview) {
                         setAppStep('success_interview')
@@ -286,12 +332,15 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                                 </div>
                                 <div className="flex-shrink-0">
                                     <Button
-                                        className="h-14 px-8 rounded-2xl text-lg font-semibold shadow-xl shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-105 transition-all w-full md:w-auto"
+                                        className={`h-14 px-8 rounded-2xl text-lg font-semibold shadow-xl shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-105 transition-all w-full md:w-auto ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         onClick={handleApplyClick}
+                                        disabled={isLimitReached}
                                     >
-                                        Postular Ahora
+                                        {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
                                     </Button>
-                                    <p className="text-xs text-center text-gray-400 mt-2">Aplica en 2 minutos</p>
+                                    <p className="text-xs text-center text-gray-400 mt-2">
+                                        {isLimitReached ? 'Esta vacante alcanzó su límite de postulantes' : 'Aplica en 2 minutos'}
+                                    </p>
                                 </div>
                             </div>
 

@@ -1,6 +1,11 @@
+"use client"
+
 import { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, User, Briefcase, Settings, LogOut, FileText } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
 
 const MENU_ITEMS = [
     { name: "Mi Panel", href: "/candidate/dashboard", icon: LayoutDashboard },
@@ -10,6 +15,14 @@ const MENU_ITEMS = [
 ]
 
 export default function CandidateLayout({ children }: { children: ReactNode }) {
+    const pathname = usePathname()
+    const router = useRouter()
+
+    const handleSignOut = async () => {
+        await signOut(auth)
+        router.push("/")
+    }
+
     return (
         <div className="flex min-h-screen bg-slate-50">
             {/* Sidebar */}
@@ -30,16 +43,22 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1 mt-4">
-                    {MENU_ITEMS.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-[#1890ff] hover:bg-blue-50 transition-all font-medium group"
-                        >
-                            <item.icon className="w-5 h-5 text-slate-400 group-hover:text-[#1890ff] transition-colors" />
-                            {item.name}
-                        </Link>
-                    ))}
+                    {MENU_ITEMS.map((item) => {
+                        const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all ${isActive
+                                        ? "text-[#1890ff] bg-blue-50 border-l-2 border-[#1890ff]"
+                                        : "text-slate-600 hover:text-[#1890ff] hover:bg-blue-50/50 group"
+                                    }`}
+                            >
+                                <item.icon className={`w-5 h-5 transition-colors ${isActive ? "text-[#1890ff]" : "text-slate-400 group-hover:text-[#1890ff]"}`} />
+                                {item.name}
+                            </Link>
+                        )
+                    })}
                 </nav>
 
                 <div className="p-4 border-t border-slate-100 space-y-1">
@@ -50,13 +69,13 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                         <Settings className="w-5 h-5 text-slate-400" />
                         Configuración
                     </Link>
-                    <Link
-                        href="/logout"
+                    <button
+                        onClick={handleSignOut}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-all font-medium text-left"
                     >
                         <LogOut className="w-5 h-5" />
                         Cerrar Sesión
-                    </Link>
+                    </button>
                 </div>
             </aside>
 

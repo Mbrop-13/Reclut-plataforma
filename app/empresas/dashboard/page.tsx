@@ -5,22 +5,12 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import {
-    Home, Briefcase, Users, Play, Settings, LogOut, Plus,
-    TrendingUp, FileText, Clock, ChevronRight, Building2, Zap
+    Briefcase, Users, Play, Plus,
+    TrendingUp, FileText, Clock, ChevronRight, ArrowUpRight
 } from "lucide-react"
 import { db, auth } from "@/lib/firebase"
-import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore"
 import { onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
-
-const NAV_ITEMS = [
-    { icon: Home, label: "Inicio", href: "/empresas/dashboard", active: true },
-    { icon: Plus, label: "Publicar Empleo", href: "/empresas/vacantes/nueva" },
-    { icon: Briefcase, label: "Mis Vacantes", href: "/empresas/vacantes" },
-    { icon: Users, label: "Candidatos", href: "/empresas/candidatos" },
-    { icon: Play, label: "Entrevistas IA", href: "/empresas/entrevistas" },
-    { icon: Settings, label: "Configuración", href: "/empresas/configuracion" },
-]
 
 export default function EmpresaDashboard() {
     const router = useRouter()
@@ -33,23 +23,16 @@ export default function EmpresaDashboard() {
     const [recentApplications, setRecentApplications] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [companyName, setCompanyName] = useState("Empresa")
-    const [plan, setPlan] = useState("Plan Gratuito")
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
-                    // Fetch user/company data
                     const userDoc = await import("firebase/firestore").then(m => m.getDoc(m.doc(db, "users", user.uid)))
                     if (userDoc.exists()) {
                         const userData = userDoc.data()
                         setCompanyName(userData.companyName || "Empresa")
-                        setPlan(userData.plan || "Plan Gratuito")
                     }
-
-                    // Real stats fetching would go here. For now, we keep it safe with 0s but remove mock comments.
-                    // We can expand this to query Firestore 'jobs' and 'applications' collections later.
-
                 } catch (error) {
                     console.error("Error fetching data:", error)
                 } finally {
@@ -63,200 +46,132 @@ export default function EmpresaDashboard() {
     }, [router])
 
     const KPIS = [
-        { label: "Vacantes Activas", value: stats.activeJobs.toString(), icon: Briefcase, change: "0 nuevas" },
-        { label: "Total Postulaciones", value: stats.totalApplications.toString(), icon: FileText, change: "0 esta semana" },
-        { label: "Entrevistas IA", value: stats.interviews.toString(), icon: Play, change: "0 pendientes" },
-        { label: "Tasa de Conversión", value: `${stats.conversionRate}%`, icon: TrendingUp, change: "0% vs anterior" },
+        { label: "Vacantes Activas", value: stats.activeJobs.toString(), icon: Briefcase, change: "0 nuevas", color: "text-[#1890ff] bg-blue-50" },
+        { label: "Postulaciones", value: stats.totalApplications.toString(), icon: FileText, change: "0 esta semana", color: "text-emerald-600 bg-emerald-50" },
+        { label: "Entrevistas IA", value: stats.interviews.toString(), icon: Play, change: "0 pendientes", color: "text-indigo-600 bg-indigo-50" },
+        { label: "Tasa de Conversión", value: `${stats.conversionRate}%`, icon: TrendingUp, change: "0% vs anterior", color: "text-amber-600 bg-amber-50" },
+    ]
+
+    const QUICK_ACTIONS = [
+        { label: "Publicar Vacante", desc: "Crea una nueva oferta de empleo", icon: Plus, href: "/empresas/vacantes/nueva", gradient: "from-[#1890ff] to-blue-600" },
+        { label: "Ver Candidatos", desc: "Revisa postulaciones recientes", icon: Users, href: "/empresas/candidatos", gradient: "from-indigo-500 to-purple-600" },
+        { label: "Entrevistas IA", desc: "Monitorea entrevistas activas", icon: Play, href: "/empresas/entrevistas", gradient: "from-emerald-500 to-teal-600" },
     ]
 
     return (
-        <div className="min-h-screen bg-[hsl(var(--gray-50))] flex">
-            {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-[hsl(var(--gray-200))] flex flex-col fixed h-full z-10 pt-16">
-
-
-                {/* Company Info */}
-                <div className="p-4 border-b border-[hsl(var(--gray-200))]">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-[#1890ff] flex items-center justify-center">
-                            <Building2 className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="overflow-hidden">
-                            <p className="text-body font-medium text-[hsl(var(--gray-900))] truncate">{companyName}</p>
-                            <p className="text-small text-[hsl(var(--gray-500))]">{plan}</p>
-                        </div>
-                    </div>
+        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+            {/* Header */}
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
+                        ¡Hola, {companyName}! 👋
+                    </h1>
+                    <p className="text-slate-500 mt-1">Resumen de tu actividad de reclutamiento</p>
                 </div>
+                <Link href="/empresas/vacantes/nueva">
+                    <Button className="bg-[#1890ff] hover:bg-blue-600 text-white rounded-xl px-5 h-11 shadow-lg shadow-blue-500/20 font-semibold">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Publicar Vacante
+                    </Button>
+                </Link>
+            </motion.div>
 
-                {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-1">
-                    <Link
-                        href="/empresas/dashboard"
-                        className={'nav-item-active'}
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 mb-8">
+                {KPIS.map((kpi, i) => (
+                    <motion.div
+                        key={kpi.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 + i * 0.05 }}
+                        className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-lg hover:border-slate-300 transition-all group"
                     >
-                        <Home className="w-5 h-5" />
-                        Inicio
-                    </Link>
-                    <Link
-                        href="/empresas/mis-publicaciones"
-                        className={'nav-item'}
-                    >
-                        <Plus className="w-5 h-5" />
-                        Publicar Empleo
-                    </Link>
-                    <Link
-                        href="/empresas/mis-publicaciones"
-                        className={'nav-item'}
-                    >
-                        <Briefcase className="w-5 h-5" />
-                        Mis Vacantes
-                    </Link>
-                    <Link
-                        href="/empresas/candidatos"
-                        className={'nav-item'}
-                    >
-                        <Users className="w-5 h-5" />
-                        Candidatos
-                    </Link>
-                    <Link
-                        href="/empresas/entrevistas"
-                        className={'nav-item'}
-                    >
-                        <Play className="w-5 h-5" />
-                        Entrevistas IA
-                    </Link>
-                    <Link
-                        href="/empresas/configuracion"
-                        className={'nav-item'}
-                    >
-                        <Settings className="w-5 h-5" />
-                        Configuración
-                    </Link>
-                </nav>
-
-                {/* Usage / Plan CTA */}
-                <div className="p-4 border-t border-[hsl(var(--gray-200))]">
-                    <div className="p-4 bg-[hsl(var(--primary-light))] rounded-lg border border-[#1890ff]/20">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-small font-semibold text-[#1890ff]">{plan}</p>
-                            <span className="text-[10px] bg-white text-[#1890ff] px-2 py-0.5 rounded-full border border-[#1890ff]/20">
-                                Básico
-                            </span>
-                        </div>
-
-                        <div className="space-y-3 mb-4">
-                            <div>
-                                <div className="flex justify-between text-[11px] text-[hsl(var(--gray-600))] mb-1">
-                                    <span>Vacantes</span>
-                                    <span>{stats.activeJobs} / 3</span>
-                                </div>
-                                <div className="w-full bg-white rounded-full h-1.5 overflow-hidden">
-                                    <div className="bg-[#1890ff] h-1.5 rounded-full w-0" />
-                                </div>
+                        <div className="flex items-start justify-between mb-4">
+                            <div className={`w-11 h-11 rounded-xl ${kpi.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                                <kpi.icon className="w-5 h-5" />
                             </div>
                         </div>
+                        <div className="text-2xl lg:text-3xl font-bold text-slate-900 mb-1">{kpi.value}</div>
+                        <div className="text-sm text-slate-500 mb-2">{kpi.label}</div>
+                        <div className="text-xs text-emerald-600 font-medium">{kpi.change}</div>
+                    </motion.div>
+                ))}
+            </div>
 
-                        <Link href="/empresas/planes">
-                            <Button size="sm" className="w-full bg-[#1890ff] hover:bg-[#1890ff]/90 text-white border-0 shadow-sm text-xs h-8">
-                                <Zap className="w-3 h-3 mr-1.5" />
-                                Mejorar Plan
-                            </Button>
+            {/* Quick Actions */}
+            <div className="grid md:grid-cols-3 gap-4 lg:gap-5 mb-8">
+                {QUICK_ACTIONS.map((action, i) => (
+                    <motion.div
+                        key={action.label}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + i * 0.05 }}
+                    >
+                        <Link href={action.href}>
+                            <div className="group bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:border-slate-300 transition-all h-full">
+                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                                    <action.icon className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900 mb-1">{action.label}</h3>
+                                        <p className="text-sm text-slate-500">{action.desc}</p>
+                                    </div>
+                                    <ArrowUpRight className="w-5 h-5 text-slate-300 group-hover:text-[#1890ff] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                                </div>
+                            </div>
                         </Link>
-                    </div>
-                </div>
+                    </motion.div>
+                ))}
+            </div>
 
-                {/* Logout */}
-                <div className="p-4 border-t border-[hsl(var(--gray-200))]">
-                    <button onClick={() => auth.signOut()} className="nav-item w-full text-[hsl(var(--destructive))]">
-                        <LogOut className="w-5 h-5" />
-                        Cerrar Sesión
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 ml-64 p-8">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-h1 text-[hsl(var(--gray-900))] mb-2">Dashboard</h1>
-                        <p className="text-body text-[hsl(var(--gray-600))]">
-                            Resumen de actividad de reclutamiento
-                        </p>
-                    </div>
-                    <Link href="/empresas/vacantes/nueva">
-                        <Button className="btn-primary">
-                            <Plus className="w-4 h-4" />
-                            Publicar Vacante
-                        </Button>
+            {/* Recent Applications */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="bg-white rounded-2xl border border-slate-200 overflow-hidden"
+            >
+                <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                    <h2 className="text-lg font-bold text-slate-900">Postulaciones Recientes</h2>
+                    <Link href="/empresas/candidatos" className="text-sm text-[#1890ff] font-medium hover:underline flex items-center gap-1">
+                        Ver todas
+                        <ChevronRight className="w-4 h-4" />
                     </Link>
                 </div>
 
-                {/* KPI Cards */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {KPIS.map((kpi, i) => (
-                        <motion.div
-                            key={kpi.label}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            className="bg-white rounded-xl border border-[hsl(var(--gray-200))] p-6"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary-light))] flex items-center justify-center text-[#1890ff]">
-                                    <kpi.icon className="w-5 h-5" />
+                <div className="divide-y divide-slate-100">
+                    {recentApplications.length > 0 ? (
+                        recentApplications.map((postulacion) => (
+                            <div key={postulacion.id} className="flex items-center gap-4 p-5 hover:bg-slate-50 transition-colors cursor-pointer">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                                    <Users className="w-5 h-5 text-slate-400" />
                                 </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-slate-900">{postulacion.candidateName || "Candidato"}</p>
+                                    <p className="text-xs text-slate-500 truncate">{postulacion.jobTitle || "Vacante"}</p>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>Reciente</span>
+                                </div>
+                                <Button variant="ghost" size="sm" className="text-[#1890ff] text-xs font-semibold hover:bg-blue-50">
+                                    Ver perfil
+                                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                                </Button>
                             </div>
-                            <div className="text-h1 text-[hsl(var(--gray-900))] mb-1">{kpi.value}</div>
-                            <div className="text-body text-[hsl(var(--gray-600))] mb-2">{kpi.label}</div>
-                            <div className="text-small text-[hsl(var(--success))]">{kpi.change}</div>
-                        </motion.div>
-                    ))}
+                        ))
+                    ) : (
+                        <div className="p-12 text-center">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                                <Users className="w-6 h-6 text-slate-300" />
+                            </div>
+                            <p className="text-sm font-medium text-slate-500 mb-1">Sin postulaciones recientes</p>
+                            <p className="text-xs text-slate-400">Las postulaciones aparecerán aquí</p>
+                        </div>
+                    )}
                 </div>
-
-                {/* Recent Applications */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="bg-white rounded-xl border border-[hsl(var(--gray-200))] overflow-hidden"
-                >
-                    <div className="flex items-center justify-between p-6 border-b border-[hsl(var(--gray-200))]">
-                        <h2 className="text-h2 text-[hsl(var(--gray-900))]">Postulaciones Recientes</h2>
-                        <Link href="/empresas/candidatos" className="text-body text-[#1890ff] font-medium hover:underline">
-                            Ver todas
-                        </Link>
-                    </div>
-
-                    <div className="divide-y divide-[hsl(var(--gray-200))]">
-                        {recentApplications.length > 0 ? (
-                            recentApplications.map((postulacion) => (
-                                <div key={postulacion.id} className="flex items-center gap-4 p-4 hover:bg-[hsl(var(--gray-50))] transition-colors cursor-pointer">
-                                    <div className="w-10 h-10 rounded-full bg-[hsl(var(--gray-100))] flex items-center justify-center">
-                                        <Users className="w-5 h-5 text-[hsl(var(--gray-400))]" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-body font-medium text-[hsl(var(--gray-900))]">{postulacion.candidateName || "Candidato"}</p>
-                                        <p className="text-small text-[hsl(var(--gray-500))]">{postulacion.jobTitle || "Vacante"}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-small text-[hsl(var(--gray-500))]">
-                                        <Clock className="w-4 h-4" />
-                                        <span>Reciente</span>
-                                    </div>
-                                    <Button variant="ghost" size="sm" className="text-[#1890ff]">
-                                        Ver perfil
-                                        <ChevronRight className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="p-8 text-center text-[hsl(var(--gray-500))]">
-                                No hay postulaciones recientes
-                            </div>
-                        )}
-                    </div>
-                </motion.div>
-            </main>
+            </motion.div>
         </div>
     )
 }

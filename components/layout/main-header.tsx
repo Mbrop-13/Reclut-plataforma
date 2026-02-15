@@ -12,26 +12,27 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu"
-import { LayoutDashboard, LogOut, User, Briefcase, Settings } from "lucide-react"
+import { LayoutDashboard, LogOut, User, Briefcase, Settings, Menu, X } from "lucide-react"
 import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
-import { motion, useScroll, useMotionValueEvent } from "framer-motion"
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion"
 
 export function MainHeader() {
     const [user, setUser] = useState<FirebaseUser | null>(null)
     const [userProfile, setUserProfile] = useState<any>(null)
     const [scrolled, setScrolled] = useState(false)
     const [visible, setVisible] = useState(true)
+    const [mobileMenu, setMobileMenu] = useState(false)
     const { scrollY } = useScroll()
     const router = useRouter()
     const pathname = usePathname()
 
-    // Hide header on scroll down, show on scroll up
     useMotionValueEvent(scrollY, "change", (latest) => {
         const previous = scrollY.getPrevious() ?? 0
         if (latest > previous && latest > 100) {
             setVisible(false)
+            setMobileMenu(false)
         } else {
             setVisible(true)
         }
@@ -59,112 +60,166 @@ export function MainHeader() {
         router.push("/")
     }
 
-    // Get initials for avatar
     const getInitials = () => {
-        if (userProfile?.name) {
-            return userProfile.name.substring(0, 2).toUpperCase()
-        }
-        if (user?.email) {
-            return user.email.substring(0, 2).toUpperCase()
-        }
+        if (userProfile?.name) return userProfile.name.substring(0, 2).toUpperCase()
+        if (user?.email) return user.email.substring(0, 2).toUpperCase()
         return "U"
     }
 
     const isCompany = userProfile?.role === 'company'
+    const isHome = pathname === '/'
+
+    const navLinks = [
+        ...(!isCompany ? [{ href: "/empleos", label: "Empleos" }] : []),
+        { href: "/registro/empresa", label: "Para Empresas" },
+    ]
 
     return (
-        <motion.header
-            initial={{ y: 0 }}
-            animate={{ y: visible ? 0 : -100 }}
-            transition={{ duration: 0.3 }}
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm" : "bg-transparent"
-                }`}
-        >
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-xl bg-[#1890ff] flex items-center justify-center shadow-lg shadow-[#1890ff]/20">
-                            <span className="text-white font-bold text-lg">R</span>
-                        </div>
-                        <span className={`text-xl font-bold tracking-tight hidden sm:block ${scrolled ? "text-slate-900" : "text-slate-900"}`}>
-                            Re<span className="text-[#1890ff]">clu</span>
-                        </span>
-                    </Link>
-
-                    {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center gap-8">
-                        {!isCompany && (
-                            <Link href="/empleos" className={`text-sm font-medium hover:text-[#1890ff] transition-colors ${pathname === '/empleos' ? 'text-[#1890ff]' : 'text-slate-600'}`}>
-                                Buscar Empleos
-                            </Link>
-                        )}
-                        {user && !isCompany && (
-                            <Link href="/dashboard/applications" className="text-sm font-medium text-slate-600 hover:text-[#1890ff] transition-colors">
-                                Mis Postulaciones
-                            </Link>
-                        )}
-                    </nav>
-
-                    {/* Auth Actions */}
-                    <div className="flex items-center gap-4">
-                        {user ? (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 overflow-hidden ring-2 ring-transparent hover:ring-[#1890ff]/20 transition-all">
-                                        <div className="h-full w-full bg-gradient-to-br from-[#1890ff] to-blue-600 flex items-center justify-center text-white font-bold shadow-md">
-                                            {getInitials()}
-                                        </div>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="end" forceMount>
-                                    <DropdownMenuLabel className="font-normal">
-                                        <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium leading-none">{userProfile?.name || "Usuario"}</p>
-                                            <p className="text-xs leading-none text-muted-foreground">
-                                                {user.email}
-                                            </p>
-                                        </div>
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => router.push(isCompany ? "/dashboard" : "/candidate/dashboard")}>
-                                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                                        <span>Mi Panel</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => router.push(isCompany ? "/dashboard/settings" : "/candidate/profile")}>
-                                        <User className="mr-2 h-4 w-4" />
-                                        <span>Mi Perfil</span>
-                                    </DropdownMenuItem>
-                                    {!isCompany && (
-                                        <DropdownMenuItem onClick={() => router.push("/empleos")}>
-                                            <Briefcase className="mr-2 h-4 w-4" />
-                                            <span>Buscar Empleos</span>
-                                        </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                                        <LogOut className="mr-2 h-4 w-4" />
-                                        <span>Cerrar Sesión</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        ) : (
-                            <div className="flex items-center gap-3">
-                                <Link href="/login">
-                                    <Button variant="ghost" className="text-sm font-medium">
-                                        Iniciar Sesión
-                                    </Button>
-                                </Link>
-                                <Link href="/registro">
-                                    <Button className="btn-primary shadow-lg shadow-blue-500/20">
-                                        Comenzar Gratis
-                                    </Button>
-                                </Link>
+        <>
+            <motion.header
+                initial={{ y: 0 }}
+                animate={{ y: visible ? 0 : -100 }}
+                transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
+                        ? "bg-white/85 backdrop-blur-2xl border-b border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                        : isHome
+                            ? "bg-transparent"
+                            : "bg-white/85 backdrop-blur-2xl"
+                    }`}
+            >
+                <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-[72px]">
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center gap-2.5 group">
+                            <div className="w-9 h-9 rounded-xl bg-[#1890ff] flex items-center justify-center shadow-lg shadow-[#1890ff]/25 group-hover:shadow-[#1890ff]/40 transition-shadow">
+                                <span className="text-white font-bold text-lg">R</span>
                             </div>
-                        )}
+                            <span className={`text-xl font-bold tracking-tight ${scrolled || !isHome ? "text-slate-900" : "text-white"}`}>
+                                Re<span className="text-[#1890ff]">clut</span>
+                            </span>
+                        </Link>
+
+                        {/* Desktop Nav */}
+                        <nav className="hidden md:flex items-center gap-1">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${pathname === link.href
+                                            ? "text-[#1890ff] bg-blue-50/80"
+                                            : scrolled || !isHome
+                                                ? "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                                : "text-white/80 hover:text-white hover:bg-white/10"
+                                        }`}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </nav>
+
+                        {/* Right Section */}
+                        <div className="flex items-center gap-3">
+                            {user ? (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="relative h-10 w-10 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-[#1890ff]/30 transition-all focus:outline-none focus:ring-[#1890ff]/30">
+                                            <div className="h-full w-full bg-gradient-to-br from-[#1890ff] to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                                                {getInitials()}
+                                            </div>
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-56 rounded-xl shadow-xl border-slate-200/80 mt-2" align="end" forceMount>
+                                        <DropdownMenuLabel className="font-normal px-4 py-3">
+                                            <p className="text-sm font-semibold text-slate-900">{userProfile?.name || "Usuario"}</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">{user.email}</p>
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/dashboard" : "/candidate/dashboard")} className="px-4 py-2.5 cursor-pointer">
+                                            <LayoutDashboard className="mr-3 h-4 w-4 text-slate-400" />
+                                            <span>Mi Panel</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/dashboard/settings" : "/candidate/profile")} className="px-4 py-2.5 cursor-pointer">
+                                            <User className="mr-3 h-4 w-4 text-slate-400" />
+                                            <span>Mi Perfil</span>
+                                        </DropdownMenuItem>
+                                        {!isCompany && (
+                                            <DropdownMenuItem onClick={() => router.push("/empleos")} className="px-4 py-2.5 cursor-pointer">
+                                                <Briefcase className="mr-3 h-4 w-4 text-slate-400" />
+                                                <span>Buscar Empleos</span>
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={handleSignOut} className="px-4 py-2.5 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer">
+                                            <LogOut className="mr-3 h-4 w-4" />
+                                            <span>Cerrar Sesión</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <Link href="/login" className="hidden sm:block">
+                                        <Button variant="ghost" className={`text-sm font-medium rounded-lg px-4 ${scrolled || !isHome ? "text-slate-700 hover:text-slate-900" : "text-white/90 hover:text-white hover:bg-white/10"
+                                            }`}>
+                                            Iniciar Sesión
+                                        </Button>
+                                    </Link>
+                                    <Link href="/registro">
+                                        <Button className="bg-[#1890ff] hover:bg-blue-600 text-white text-sm font-semibold rounded-lg px-5 h-10 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
+                                            Registrarse
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
+
+                            {/* Mobile Menu Toggle */}
+                            <button
+                                onClick={() => setMobileMenu(!mobileMenu)}
+                                className={`md:hidden p-2 rounded-lg transition-colors ${scrolled || !isHome ? "text-slate-700 hover:bg-slate-100" : "text-white hover:bg-white/10"
+                                    }`}
+                            >
+                                {mobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </motion.header>
+
+                {/* Mobile Menu */}
+                <AnimatePresence>
+                    {mobileMenu && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="md:hidden overflow-hidden bg-white border-t border-slate-100"
+                        >
+                            <div className="px-6 py-4 space-y-1">
+                                {navLinks.map((link) => (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        onClick={() => setMobileMenu(false)}
+                                        className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#1890ff] transition-colors"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                ))}
+                                {!user && (
+                                    <Link
+                                        href="/login"
+                                        onClick={() => setMobileMenu(false)}
+                                        className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                        Iniciar Sesión
+                                    </Link>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.header>
+
+            {/* Spacer */}
+            <div className="h-[72px]" />
+        </>
     )
 }
