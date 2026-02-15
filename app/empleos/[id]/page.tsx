@@ -6,7 +6,7 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-
 import { Button } from "@/components/ui/button"
 import { MainHeader } from "@/components/layout/main-header"
 import {
-    MapPin, Building2, CheckCircle2,
+    MapPin, Building2, CheckCircle2, Briefcase,
     DollarSign, Heart, ArrowLeft,
     Calendar, Globe, Loader2, BrainCircuit, Sparkles, Check, Clock, FileText
 } from "lucide-react"
@@ -253,138 +253,142 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
             {/* Navigation Header */}
             <MainHeader />
 
-            {/* Hero Section with Blurred Background */}
-            <div className="relative w-full h-[500px] overflow-hidden">
-                {/* Background Layer */}
-                <div className="absolute inset-0 bg-slate-900">
-                    {company?.logoUrl ? (
-                        <img
-                            src={company.logoUrl}
-                            alt="Background"
-                            className="w-full h-full object-cover opacity-30 blur-[60px] scale-125 transform"
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-900 via-slate-900 to-black opacity-80" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-black/20" />
-                </div>
+            {/* Clean white hero area */}
+            <section className="relative bg-white border-b border-slate-100 overflow-hidden">
+                <div className="absolute top-0 left-1/3 w-[700px] h-[500px] rounded-full bg-[#1890ff]/[0.04] blur-[120px]" />
+                <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-indigo-500/[0.03] blur-[100px]" />
 
-                {/* Hero Content */}
-                <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 h-full pt-32 flex flex-col justify-start">
-                    <Link href="/empleos" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-8 w-fit bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10 hover:bg-black/30">
+                <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 pt-6 pb-10">
+                    {/* Breadcrumb */}
+                    <Link href="/empleos" className="inline-flex items-center gap-2 text-slate-500 hover:text-[#1890ff] transition-colors mb-6 text-sm font-medium">
                         <ArrowLeft className="w-4 h-4" />
-                        <span className="text-sm font-medium">Volver a empleos</span>
+                        Volver a empleos
                     </Link>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-white max-w-3xl"
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="px-3 py-1 rounded-full bg-[#1890ff] text-white text-xs font-bold shadow-lg shadow-blue-500/30">
-                                {job.workMode}
-                            </span>
-                            <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-medium backdrop-blur-md border border-white/10">
-                                {job.publisher || "Publicado hace 2 días"}
-                            </span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
-                            {job.title}
-                        </h1>
-                    </motion.div>
-                </div>
-            </div>
-
-            {/* Main Content Container - Floating Up */}
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 -mt-32 relative z-20 pb-20">
-                <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="grid lg:grid-cols-3 gap-8"
-                >
-                    {/* Left Column (Main Info) */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Floating Glass Card */}
-                        <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/50 p-8 border border-white">
-                            <div className="flex flex-col md:flex-row gap-6 items-center md:items-start mb-8 border-b border-gray-100 pb-8">
-                                <div className="w-24 h-24 rounded-2xl bg-white shadow-lg p-2 flex-shrink-0 border border-gray-100">
-                                    {company?.logoUrl ? (
-                                        <img src={company.logoUrl} className="w-full h-full object-contain rounded-xl" />
-                                    ) : (
-                                        <Building2 className="w-full h-full text-gray-300 p-4" />
-                                    )}
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+                        {/* Title bar with company info */}
+                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                            <div className="w-20 h-20 rounded-2xl bg-white shadow-lg p-1.5 flex-shrink-0 border border-slate-100">
+                                {company?.logoUrl ? (
+                                    <img src={company.logoUrl} className="w-full h-full object-contain rounded-xl" />
+                                ) : (
+                                    <Building2 className="w-full h-full text-gray-300 p-3" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className="px-3 py-1 rounded-full bg-[#1890ff] text-white text-xs font-bold">
+                                        {job.workMode}
+                                    </span>
+                                    <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                                        {job.publisher || "Publicado hace 2 días"}
+                                    </span>
                                 </div>
-                                <div className="flex-1 text-center md:text-left">
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">{company?.name}</h2>
-                                    <div className="flex flex-wrap text-slate-500 gap-x-6 gap-y-2 justify-center md:justify-start">
-                                        <span className="flex items-center gap-1.5">
-                                            <MapPin className="w-4 h-4 text-[#1890ff]" /> {job.location}
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <DollarSign className="w-4 h-4 text-green-600" />
-                                            <span className="font-medium text-slate-700">
-                                                {job.currency} {job.salaryMin?.toLocaleString()} - {job.salaryMax?.toLocaleString()}
-                                            </span>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex-shrink-0">
-                                    <Button
-                                        className={`h-14 px-8 rounded-2xl text-lg font-semibold shadow-xl shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-105 transition-all w-full md:w-auto ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        onClick={handleApplyClick}
-                                        disabled={isLimitReached}
-                                    >
-                                        {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
-                                    </Button>
-                                    <p className="text-xs text-center text-gray-400 mt-2">
-                                        {isLimitReached ? 'Esta vacante alcanzó su límite de postulantes' : 'Aplica en 2 minutos'}
-                                    </p>
+                                <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">
+                                    {job.title}
+                                </h1>
+                                <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                                    <span className="flex items-center gap-1.5 font-medium">
+                                        <Building2 className="w-4 h-4 text-slate-400" />
+                                        {company?.name}
+                                    </span>
+                                    <span className="flex items-center gap-1.5">
+                                        <MapPin className="w-4 h-4 text-[#1890ff]" />
+                                        {job.location}
+                                    </span>
+                                    <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                                        <DollarSign className="w-4 h-4 text-green-600" />
+                                        {job.currency} {job.salaryMin?.toLocaleString()} - {job.salaryMax?.toLocaleString()}
+                                    </span>
                                 </div>
                             </div>
+                            <div className="flex-shrink-0 mt-2 md:mt-0">
+                                <Button
+                                    className={`h-12 px-8 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-[1.02] transition-all w-full md:w-auto ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    onClick={handleApplyClick}
+                                    disabled={isLimitReached}
+                                >
+                                    {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
+                                </Button>
+                                <p className="text-xs text-center text-slate-400 mt-1.5">
+                                    {isLimitReached ? 'Límite de postulantes alcanzado' : 'Aplica en 2 minutos'}
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
 
-                            {/* Skills Tags */}
-                            <div className="mb-8">
-                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Habilidades Requeridas</h3>
+            {/* Main Content  */}
+            <div className="max-w-5xl mx-auto px-6 lg:px-8 py-8 pb-20">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    className="grid lg:grid-cols-3 gap-8"
+                >
+                    {/* Left Column — stacked sections */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Skills Tags */}
+                        {job.requirements?.length > 0 && (
+                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Habilidades Requeridas</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {job.requirements?.slice(0, 6).map((req: string, i: number) => (
-                                        <div key={i} className="px-4 py-2 bg-slate-50 text-slate-700 rounded-xl text-sm font-medium border border-slate-200 flex items-center gap-2 hover:border-[#1890ff]/50 hover:bg-blue-50 transition-colors cursor-default">
+                                    {job.requirements.slice(0, 8).map((req: string, i: number) => (
+                                        <div key={i} className="px-3.5 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 flex items-center gap-2 hover:border-[#1890ff]/50 hover:bg-blue-50 transition-colors cursor-default">
                                             <div className="w-1.5 h-1.5 rounded-full bg-[#1890ff]" />
                                             {req}
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* Description Section */}
-                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-                            <div className="prose prose-blue max-w-none">
-                                <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-[#1890ff]" />
-                                    Descripción del Puesto
-                                </h3>
-                                <div className="text-slate-600 leading-relaxed whitespace-pre-line">
-                                    {job.description}
-                                </div>
+                        {/* Description */}
+                        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-[#1890ff]" />
+                                Descripción del Puesto
+                            </h3>
+                            <div className="text-slate-600 leading-relaxed whitespace-pre-line text-[15px]">
+                                {job.description}
                             </div>
                         </div>
 
-                        {/* Requirements List */}
-                        {job.requirements?.length > 0 && (
-                            <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-                                <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-[#1890ff]" />
-                                    Requisitos Principales
+                        {/* Responsibilities */}
+                        {job.responsibilities?.length > 0 && (
+                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+                                    <Briefcase className="w-5 h-5 text-purple-500" />
+                                    Responsabilidades
                                 </h3>
-                                <ul className="grid gap-4">
+                                <ul className="space-y-3">
+                                    {job.responsibilities.map((r: string, i: number) => (
+                                        <li key={i} className="flex gap-3 items-start">
+                                            <div className="w-6 h-6 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <Check className="w-3.5 h-3.5 text-purple-500" />
+                                            </div>
+                                            <span className="text-slate-700 text-[15px]">{r}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Requirements */}
+                        {job.requirements?.length > 0 && (
+                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5 text-[#1890ff]" />
+                                    Requisitos
+                                </h3>
+                                <ul className="space-y-3">
                                     {job.requirements.map((req: string, i: number) => (
-                                        <li key={i} className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <li key={i} className="flex gap-3 items-start">
+                                            <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                 <Check className="w-3.5 h-3.5 text-[#1890ff]" />
                                             </div>
-                                            <span className="text-slate-700">{req}</span>
+                                            <span className="text-slate-700 text-[15px]">{req}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -394,40 +398,59 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
 
                     {/* Right Column (Sticky Sidebar) */}
                     <div className="space-y-6">
-                        {/* Company Card */}
-                        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100 sticky top-24">
-                            <div className="text-center mb-6">
-                                <h3 className="text-lg font-bold text-slate-900 mb-1">Sobre la Empresa</h3>
-                                <div className="w-12 h-1 bg-[#1890ff] mx-auto rounded-full" />
+                        {/* Apply CTA Card */}
+                        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm sticky top-24">
+                            <div className="text-center mb-5">
+                                <div className="w-16 h-16 rounded-2xl bg-white shadow-lg p-1.5 mx-auto mb-3 border border-slate-100">
+                                    {company?.logoUrl ? (
+                                        <img src={company.logoUrl} className="w-full h-full object-contain rounded-xl" />
+                                    ) : (
+                                        <Building2 className="w-full h-full text-gray-300 p-2" />
+                                    )}
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900 mb-0.5">{company?.name}</h3>
+                                <div className="w-10 h-1 bg-[#1890ff] mx-auto rounded-full" />
                             </div>
 
-                            <p className="text-sm text-slate-600 leading-relaxed mb-6 text-center">
+                            <p className="text-sm text-slate-500 leading-relaxed mb-5 text-center">
                                 {company?.description || "Una empresa líder comprometida con la innovación y el desarrollo de talento."}
                             </p>
 
-                            <div className="space-y-3 mb-6">
-                                {company?.website && (
-                                    <a href={company.website} target="_blank" className="flex items-center justify-center w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:border-[#1890ff] hover:text-[#1890ff] transition-colors text-sm font-medium gap-2">
-                                        <Globe className="w-4 h-4" />
-                                        Visitar Sitio Web
-                                    </a>
-                                )}
-                            </div>
+                            {company?.website && (
+                                <a href={company.website} target="_blank" className="flex items-center justify-center w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:border-[#1890ff] hover:text-[#1890ff] transition-colors text-sm font-medium gap-2 mb-5">
+                                    <Globe className="w-4 h-4" />
+                                    Visitar Sitio Web
+                                </a>
+                            )}
 
                             {/* Benefits */}
                             {job.benefits?.length > 0 && (
-                                <div className="pt-6 border-t border-slate-100">
-                                    <h4 className="font-bold text-sm text-slate-900 mb-4 uppercase tracking-wide">Beneficios</h4>
+                                <div className="pt-5 border-t border-slate-100">
+                                    <h4 className="font-bold text-sm text-slate-900 mb-4 uppercase tracking-wide flex items-center gap-1.5">
+                                        <Heart className="w-3.5 h-3.5 text-pink-500" />
+                                        Beneficios
+                                    </h4>
                                     <ul className="space-y-3">
                                         {job.benefits.map((benefit: string, i: number) => (
                                             <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
-                                                <Heart className="w-4 h-4 text-pink-500 flex-shrink-0 mt-0.5" />
+                                                <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                                                 {benefit}
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
                             )}
+
+                            {/* Second CTA */}
+                            <div className="mt-6 pt-5 border-t border-slate-100">
+                                <Button
+                                    className={`w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 transition-all ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    onClick={handleApplyClick}
+                                    disabled={isLimitReached}
+                                >
+                                    {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </motion.div>

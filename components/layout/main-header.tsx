@@ -81,10 +81,8 @@ export function MainHeader() {
                 animate={{ y: visible ? 0 : -100 }}
                 transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-                        ? "bg-white/85 backdrop-blur-2xl border-b border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-                        : isHome
-                            ? "bg-transparent"
-                            : "bg-white/85 backdrop-blur-2xl"
+                    ? "bg-white/90 backdrop-blur-2xl border-b border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                    : "bg-white/80 backdrop-blur-xl"
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -94,7 +92,7 @@ export function MainHeader() {
                             <div className="w-9 h-9 rounded-xl bg-[#1890ff] flex items-center justify-center shadow-lg shadow-[#1890ff]/25 group-hover:shadow-[#1890ff]/40 transition-shadow">
                                 <span className="text-white font-bold text-lg">R</span>
                             </div>
-                            <span className={`text-xl font-bold tracking-tight ${scrolled || !isHome ? "text-slate-900" : "text-white"}`}>
+                            <span className="text-xl font-bold tracking-tight text-slate-900">
                                 Re<span className="text-[#1890ff]">clut</span>
                             </span>
                         </Link>
@@ -106,10 +104,8 @@ export function MainHeader() {
                                     key={link.href}
                                     href={link.href}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${pathname === link.href
-                                            ? "text-[#1890ff] bg-blue-50/80"
-                                            : scrolled || !isHome
-                                                ? "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                                                : "text-white/80 hover:text-white hover:bg-white/10"
+                                        ? "text-[#1890ff] bg-blue-50/80"
+                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                                         }`}
                                 >
                                     {link.label}
@@ -158,8 +154,7 @@ export function MainHeader() {
                             ) : (
                                 <div className="flex items-center gap-2">
                                     <Link href="/login" className="hidden sm:block">
-                                        <Button variant="ghost" className={`text-sm font-medium rounded-lg px-4 ${scrolled || !isHome ? "text-slate-700 hover:text-slate-900" : "text-white/90 hover:text-white hover:bg-white/10"
-                                            }`}>
+                                        <Button variant="ghost" className="text-sm font-medium rounded-lg px-4 text-slate-700 hover:text-slate-900">
                                             Iniciar Sesión
                                         </Button>
                                     </Link>
@@ -174,8 +169,7 @@ export function MainHeader() {
                             {/* Mobile Menu Toggle */}
                             <button
                                 onClick={() => setMobileMenu(!mobileMenu)}
-                                className={`md:hidden p-2 rounded-lg transition-colors ${scrolled || !isHome ? "text-slate-700 hover:bg-slate-100" : "text-white hover:bg-white/10"
-                                    }`}
+                                className="md:hidden p-2 rounded-lg transition-colors text-slate-700 hover:bg-slate-100"
                             >
                                 {mobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                             </button>
