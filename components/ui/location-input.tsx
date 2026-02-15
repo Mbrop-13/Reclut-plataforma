@@ -95,6 +95,22 @@ interface LocationInputProps {
 
 export function LocationInput({ value, onChange, className, placeholder = "Selecciona ubicación..." }: LocationInputProps) {
     const [open, setOpen] = React.useState(false)
+    const [inputValue, setInputValue] = React.useState("")
+
+    const handleSelect = (currentValue: string) => {
+        onChange(currentValue === value ? "" : currentValue)
+        setOpen(false)
+        setInputValue("") // Clear input on selection if desired, or keep it. Let's clear to show the selected value button.
+    }
+
+    const handleClear = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        onChange("")
+        setInputValue("")
+    }
+
+    // Filter logic: Only show groups/items if typing
+    const showList = inputValue.length > 0
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -106,50 +122,90 @@ export function LocationInput({ value, onChange, className, placeholder = "Selec
                     className={cn("w-full justify-between font-normal text-slate-500", className, value && "text-slate-900 font-medium")}
                 >
                     {value ? (
-                        <span className="truncate">{value}</span>
+                        <div className="flex items-center gap-2 truncate w-full">
+                            <MapPin className="h-4 w-4 shrink-0 text-[#1890ff]" />
+                            <span className="truncate">{value}</span>
+                        </div>
                     ) : (
-                        <span className="truncate">{placeholder}</span>
+                        <span className="truncate opacity-50">{placeholder}</span>
                     )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+
+                    <div className="flex items-center ml-2 border-l border-slate-200 pl-2 gap-1 h-5">
+                        {value && (
+                            <div
+                                role="button"
+                                onClick={handleClear}
+                                className="h-4 w-4 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <span className="sr-only">Borrar</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            </div>
+                        )}
+                        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </div>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[300px] p-0" align="start">
-                <Command>
-                    <CommandInput placeholder="Buscar ciudad o región..." />
+                <Command shouldFilter={false}>
+                    <CommandInput
+                        placeholder="Escribe para buscar..."
+                        value={inputValue}
+                        onValueChange={setInputValue}
+                    />
                     <CommandList className="max-h-[300px]">
-                        <CommandEmpty>No se encontró la ubicación.</CommandEmpty>
-                        {CHILE_DATA.map((regionData) => (
-                            <React.Fragment key={regionData.region}>
-                                <CommandGroup heading={regionData.region}>
-                                    <CommandItem
-                                        value={regionData.region}
-                                        onSelect={(currentValue) => {
-                                            onChange(currentValue === value ? "" : regionData.region)
-                                            setOpen(false)
-                                        }}
-                                        className="font-semibold text-slate-800 bg-slate-50/50"
-                                    >
-                                        <MapPin className="mr-2 h-4 w-4 text-[#1890ff]" />
-                                        {regionData.region} (Región)
-                                        {value === regionData.region && <Check className="ml-auto h-4 w-4" />}
-                                    </CommandItem>
-                                    {regionData.comunas.map((comuna) => (
-                                        <CommandItem
-                                            key={comuna}
-                                            value={comuna}
-                                            onSelect={(currentValue) => {
-                                                onChange(currentValue === value ? "" : comuna)
-                                                setOpen(false)
-                                            }}
-                                            className="pl-8"
-                                        >
-                                            {comuna}
-                                            {value === comuna && <Check className="ml-auto h-4 w-4" />}
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </React.Fragment>
-                        ))}
+                        {/* Only show "No results" if typing and no matches found in mapped items (handled manually below for better control or let Command handle it if we pass everything but hide via CSS/State?) 
+                            Actually, simpler approach: Pass items to Command but only if inputValue is not empty.
+                        */}
+
+                        {!showList && (
+                            <div className="py-6 text-center text-sm text-slate-500">
+                                Escribe el nombre de tu comuna o región...
+                            </div>
+                        )}
+
+                        {showList && (
+                            <>
+                                <CommandEmpty>No se encontró la ubicación.</CommandEmpty>
+                                {CHILE_DATA.map((regionData) => {
+                                    // Filter regions and comunas manually to optimize rendering large lists
+                                    const regionMatch = regionData.region.toLowerCase().includes(inputValue.toLowerCase())
+                                    const matchingComunas = regionData.comunas.filter(c => c.toLowerCase().includes(inputValue.toLowerCase()))
+
+                                    if (!regionMatch && matchingComunas.length === 0) return null
+
+                                    return (
+                                        <React.Fragment key={regionData.region}>
+                                            <CommandGroup heading={regionData.region}>
+                                                {/* Show Region header as selectable only if it matches */}
+                                                {regionMatch && (
+                                                    <CommandItem
+                                                        value={regionData.region}
+                                                        onSelect={handleSelect}
+                                                        className="font-semibold text-slate-800 bg-slate-50/50"
+                                                    >
+                                                        <MapPin className="mr-2 h-4 w-4 text-[#1890ff]" />
+                                                        {regionData.region} (Región)
+                                                        {value === regionData.region && <Check className="ml-auto h-4 w-4" />}
+                                                    </CommandItem>
+                                                )}
+
+                                                {matchingComunas.map((comuna) => (
+                                                    <CommandItem
+                                                        key={comuna}
+                                                        value={comuna}
+                                                        onSelect={handleSelect}
+                                                        className="pl-8"
+                                                    >
+                                                        {comuna}
+                                                        {value === comuna && <Check className="ml-auto h-4 w-4" />}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </React.Fragment>
+                                    )
+                                })}
+                            </>
+                        )}
                     </CommandList>
                 </Command>
             </PopoverContent>
