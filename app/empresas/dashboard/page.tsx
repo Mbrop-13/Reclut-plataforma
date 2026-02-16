@@ -46,14 +46,14 @@ export default function EmpresaDashboard() {
     }, [router])
 
     const KPIS = [
-        { label: "Vacantes Activas", value: stats.activeJobs.toString(), icon: Briefcase, change: "0 nuevas", color: "text-[#1890ff] bg-blue-50" },
+        { label: "Publicaciones Activas", value: stats.activeJobs.toString(), icon: Briefcase, change: "0 nuevas", color: "text-[#1890ff] bg-blue-50" },
         { label: "Postulaciones", value: stats.totalApplications.toString(), icon: FileText, change: "0 esta semana", color: "text-emerald-600 bg-emerald-50" },
         { label: "Entrevistas IA", value: stats.interviews.toString(), icon: Play, change: "0 pendientes", color: "text-indigo-600 bg-indigo-50" },
         { label: "Tasa de Conversión", value: `${stats.conversionRate}%`, icon: TrendingUp, change: "0% vs anterior", color: "text-amber-600 bg-amber-50" },
     ]
 
     const QUICK_ACTIONS = [
-        { label: "Publicar Vacante", desc: "Crea una nueva oferta de empleo", icon: Plus, href: "/empresas/vacantes/nueva", gradient: "from-[#1890ff] to-blue-600" },
+        { label: "Nueva Publicación", desc: "Crea una nueva oferta de empleo", icon: Plus, href: "/empresas/mis-publicaciones/nueva", gradient: "from-[#1890ff] to-blue-600" },
         { label: "Ver Candidatos", desc: "Revisa postulaciones recientes", icon: Users, href: "/empresas/candidatos", gradient: "from-indigo-500 to-purple-600" },
         { label: "Entrevistas IA", desc: "Monitorea entrevistas activas", icon: Play, href: "/empresas/entrevistas", gradient: "from-emerald-500 to-teal-600" },
     ]
@@ -68,10 +68,10 @@ export default function EmpresaDashboard() {
                     </h1>
                     <p className="text-slate-500 mt-1">Resumen de tu actividad de reclutamiento</p>
                 </div>
-                <Link href="/empresas/vacantes/nueva">
+                <Link href="/empresas/mis-publicaciones/nueva">
                     <Button className="bg-[#1890ff] hover:bg-blue-600 text-white rounded-xl px-5 h-11 shadow-lg shadow-blue-500/20 font-semibold">
                         <Plus className="w-4 h-4 mr-2" />
-                        Publicar Vacante
+                        Nueva Publicación
                     </Button>
                 </Link>
             </motion.div>

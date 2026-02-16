@@ -14,7 +14,7 @@ import { onAuthStateChanged } from "firebase/auth"
 import { toast } from "sonner"
 import Link from "next/link"
 
-export default function NuevaVacantePage() {
+export default function NuevaPublicacionPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [plan, setPlan] = useState<string>("free")
@@ -100,11 +100,11 @@ export default function NuevaVacantePage() {
             const { collection, addDoc } = await import("firebase/firestore")
             await addDoc(collection(db, "jobs"), jobData)
 
-            toast.success("¡Vacante publicada exitosamente!")
+            toast.success("¡Publicación creada exitosamente!")
             router.push("/empresas/mis-publicaciones")
         } catch (error) {
             console.error(error)
-            toast.error("Error al publicar la vacante")
+            toast.error("Error al crear la publicación")
         } finally {
             setIsSubmitting(false)
         }
@@ -135,7 +135,7 @@ export default function NuevaVacantePage() {
                     </h1>
                     <p className="text-slate-500 max-w-md mx-auto mb-8">
                         Tu plan gratuito solo permite <strong>1 publicación activa</strong>.
-                        Mejora tu plan para publicar vacantes ilimitadas y acceder a entrevistas con IA.
+                        Mejora tu plan para publicar más y acceder a entrevistas con IA.
                     </p>
                     <div className="flex gap-4 justify-center">
                         <Link href="/empresas/mis-publicaciones">
@@ -170,7 +170,7 @@ export default function NuevaVacantePage() {
             {/* Header */}
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
                 <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-                    Nueva Vacante
+                    Nueva Publicación
                 </h1>
                 <p className="text-slate-500 mt-1">
                     Completa la información para publicar tu oferta de empleo
@@ -192,7 +192,7 @@ export default function NuevaVacantePage() {
                             <h3 className="font-semibold text-amber-900 mb-1">Plan Gratuito — Publicación con límites</h3>
                             <ul className="text-sm text-amber-700 space-y-1">
                                 <li>• Máximo <strong>1 publicación</strong> activa</li>
-                                <li>• Límite de <strong>5 postulantes</strong> por vacante</li>
+                                <li>• Límite de <strong>5 postulantes</strong> por publicación</li>
                                 <li>• <strong>Sin entrevistas con IA</strong> ni scoring automático</li>
                                 <li>• Sin prioridad en resultados de búsqueda</li>
                             </ul>
@@ -223,7 +223,7 @@ export default function NuevaVacantePage() {
                             </div>
                             <div>
                                 <h2 className="font-semibold text-slate-900">Información del Puesto</h2>
-                                <p className="text-xs text-slate-500">Datos principales de la vacante</p>
+                                <p className="text-xs text-slate-500">Datos principales de la publicación</p>
                             </div>
                         </div>
 
@@ -460,7 +460,7 @@ export default function NuevaVacantePage() {
                             ) : (
                                 <>
                                     <CheckCircle2 className="w-4 h-4 mr-2" />
-                                    Publicar Vacante
+                                    Publicar
                                 </>
                             )}
                         </Button>

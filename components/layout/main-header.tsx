@@ -133,11 +133,11 @@ export function MainHeader() {
                                             <p className="text-xs text-slate-500 mt-0.5">{user.email}</p>
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/dashboard" : "/candidate/dashboard")} className="px-4 py-2.5 cursor-pointer">
+                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/empresas/dashboard" : "/candidate/dashboard")} className="px-4 py-2.5 cursor-pointer">
                                             <LayoutDashboard className="mr-3 h-4 w-4 text-slate-400" />
                                             <span>Mi Panel</span>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/dashboard/settings" : "/candidate/profile")} className="px-4 py-2.5 cursor-pointer">
+                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/empresas/configuracion" : "/candidate/profile")} className="px-4 py-2.5 cursor-pointer">
                                             <User className="mr-3 h-4 w-4 text-slate-400" />
                                             <span>Mi Perfil</span>
                                         </DropdownMenuItem>

@@ -18,11 +18,11 @@ export default function RegistroPage() {
             >
                 {/* Back Button */}
                 <Link
-                    href="/login"
+                    href="/"
                     className="absolute -top-12 left-0 inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Volver a iniciar sesión
+                    Volver al inicio
                 </Link>
 
                 {/* Logo */}

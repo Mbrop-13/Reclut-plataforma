@@ -24,8 +24,7 @@ import { Loader2 } from "lucide-react"
 
 const NAV_ITEMS = [
     { name: "Dashboard", href: "/empresas/dashboard", icon: LayoutDashboard },
-    { name: "Publicar Empleo", href: "/empresas/vacantes/nueva", icon: Plus },
-    { name: "Mis Vacantes", href: "/empresas/mis-publicaciones", icon: Briefcase },
+    { name: "Mis Publicaciones", href: "/empresas/mis-publicaciones", icon: Briefcase },
     { name: "Candidatos", href: "/empresas/candidatos", icon: Users },
     { name: "Entrevistas IA", href: "/empresas/entrevistas", icon: Play },
 ]
@@ -122,8 +121,8 @@ export default function EmpresasLayout({
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
-                                        ? "text-[#1890ff] bg-blue-50 border-l-2 border-[#1890ff]"
-                                        : "text-slate-600 hover:text-[#1890ff] hover:bg-slate-50 group"
+                                    ? "text-[#1890ff] bg-blue-50 border-l-2 border-[#1890ff]"
+                                    : "text-slate-600 hover:text-[#1890ff] hover:bg-slate-50 group"
                                     }`}
                             >
                                 <item.icon className={`w-5 h-5 ${isActive ? "text-[#1890ff]" : "text-slate-400 group-hover:text-[#1890ff]"} transition-colors`} />
@@ -142,7 +141,7 @@ export default function EmpresasLayout({
                         </div>
                         <div className="mb-3">
                             <div className="flex justify-between text-[11px] text-slate-500 mb-1">
-                                <span>Vacantes</span>
+                                <span>Publicaciones</span>
                                 <span>{activeJobs}/3</span>
                             </div>
                             <div className="w-full bg-white rounded-full h-1.5">
