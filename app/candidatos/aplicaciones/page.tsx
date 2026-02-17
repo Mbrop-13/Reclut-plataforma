@@ -216,7 +216,7 @@ export default function AplicacionesPage() {
                                     <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
                                     <p className="text-lg font-medium mb-2">No tienes aplicaciones activas</p>
                                     <p className="text-muted-foreground mb-4">Comienza a buscar empleos para aplicar</p>
-                                    <Link href="/empleos">
+                                    <Link href="/">
                                         <Button>Buscar Empleos</Button>
                                     </Link>
                                 </CardContent>

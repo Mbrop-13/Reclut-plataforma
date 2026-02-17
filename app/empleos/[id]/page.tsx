@@ -260,7 +260,7 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 pt-6 pb-10">
                     {/* Breadcrumb */}
-                    <Link href="/empleos" className="inline-flex items-center gap-2 text-slate-500 hover:text-[#1890ff] transition-colors mb-6 text-sm font-medium">
+                    <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-[#1890ff] transition-colors mb-6 text-sm font-medium">
                         <ArrowLeft className="w-4 h-4" />
                         Volver a empleos
                     </Link>

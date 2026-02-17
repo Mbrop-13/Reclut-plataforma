@@ -11,7 +11,7 @@ const MENU_ITEMS = [
     { name: "Mi Panel", href: "/candidate/dashboard", icon: LayoutDashboard },
     { name: "Mi Perfil", href: "/candidate/profile", icon: User },
     { name: "Mis Postulaciones", href: "/candidate/applications", icon: FileText },
-    { name: "Buscar Empleos", href: "/empleos", icon: Briefcase },
+    { name: "Buscar Empleos", href: "/", icon: Briefcase },
 ]
 
 export default function CandidateLayout({ children }: { children: ReactNode }) {
@@ -50,8 +50,8 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all ${isActive
-                                        ? "text-[#1890ff] bg-blue-50 border-l-2 border-[#1890ff]"
-                                        : "text-slate-600 hover:text-[#1890ff] hover:bg-blue-50/50 group"
+                                    ? "text-[#1890ff] bg-blue-50 border-l-2 border-[#1890ff]"
+                                    : "text-slate-600 hover:text-[#1890ff] hover:bg-blue-50/50 group"
                                     }`}
                             >
                                 <item.icon className={`w-5 h-5 transition-colors ${isActive ? "text-[#1890ff]" : "text-slate-400 group-hover:text-[#1890ff]"}`} />

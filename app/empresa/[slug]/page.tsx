@@ -67,7 +67,7 @@ export default function EmpresaProfilePage() {
             {/* Header / Cover */}
             <div className="bg-white border-b border-[hsl(var(--gray-200))]">
                 <div className="container py-8">
-                    <Link href="/empleos" className="inline-flex items-center text-sm text-[hsl(var(--gray-500))] hover:text-[hsl(var(--gray-900))] mb-6">
+                    <Link href="/" className="inline-flex items-center text-sm text-[hsl(var(--gray-500))] hover:text-[hsl(var(--gray-900))] mb-6">
                         <ArrowLeft className="w-4 h-4 mr-1" />
                         Volver a empleos
                     </Link>

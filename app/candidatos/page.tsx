@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation"
 
 const NAV_ITEMS = [
     { icon: Home, label: "Inicio", href: "/candidatos", active: true },
-    { icon: Briefcase, label: "Buscar Empleos", href: "/empleos" },
+    { icon: Briefcase, label: "Buscar Empleos", href: "/" },
     { icon: FileText, label: "Mis Postulaciones", href: "/candidatos/aplicaciones" },
     { icon: Play, label: "Entrevistas", href: "/candidatos/entrevistas" },
     { icon: User, label: "Mi Perfil", href: "/candidatos/perfil" },
@@ -186,7 +186,7 @@ export default function CandidatoDashboard() {
                 >
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-h2 text-[hsl(var(--gray-900))]">Empleos Recomendados</h2>
-                        <Link href="/empleos" className="text-body text-[#1890ff] font-medium hover:underline">
+                        <Link href="/" className="text-body text-[#1890ff] font-medium hover:underline">
                             Ver todos
                         </Link>
                     </div>

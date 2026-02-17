@@ -166,7 +166,7 @@ export default function CandidateDashboardPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
                 >
-                    <Link href="/empleos">
+                    <Link href="/">
                         <div className="bg-gradient-to-br from-[#1890ff] to-blue-600 rounded-xl p-6 hover:shadow-lg hover:shadow-blue-500/20 transition-all group cursor-pointer text-white h-full">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="w-11 h-11 rounded-lg bg-white/20 flex items-center justify-center">
@@ -192,7 +192,7 @@ export default function CandidateDashboardPage() {
                 <div className="space-y-3">
                     {[
                         { icon: User, text: "Completa tu perfil profesional para destacar", href: "/candidate/profile", done: profileComplete === 100 },
-                        { icon: Briefcase, text: "Explora empleos y postúlate a los que más te interesen", href: "/empleos", done: false },
+                        { icon: Briefcase, text: "Explora empleos y postúlate a los que más te interesen", href: "/", done: false },
                         { icon: Play, text: "Prepárate para entrevistas con IA (próximamente)", href: "#", done: false },
                     ].map((step, i) => (
                         <Link key={i} href={step.href}>

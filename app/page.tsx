@@ -1,361 +1,530 @@
 "use client"
 
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { MainHeader } from "@/components/layout/main-header"
+import { Input } from "@/components/ui/input"
 import {
-    Search, Briefcase, Building2, Users, Clock, Shield,
-    Zap, Check, Star, Play, ArrowRight, Sparkles,
-    TrendingUp, Globe, Bot, ChevronRight
+    Search, MapPin, Filter, X, ChevronDown, Briefcase, Clock, Building2,
+    DollarSign, SlidersHorizontal, Sparkles, Globe, Layers
 } from "lucide-react"
+import { EMPLEOS } from "@/lib/mock-data"
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import { LocationInput } from "@/components/ui/location-input"
 
-const fadeIn = {
-    hidden: { opacity: 0, y: 24 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } }
+const FILTROS = {
+    modalidad: {
+        label: "Modalidad",
+        icon: Globe,
+        options: ["Remoto", "Híbrido", "Presencial"]
+    },
+    tipo: {
+        label: "Tipo de empleo",
+        icon: Clock,
+        options: ["Tiempo Completo", "Medio Tiempo", "Freelance", "Pasantía", "Por Proyecto"]
+    },
+    experiencia: {
+        label: "Experiencia",
+        icon: Layers,
+        options: ["Sin experiencia", "1-2 años", "3-5 años", "5+ años", "10+ años"]
+    },
+    industria: {
+        label: "Industria",
+        icon: Building2,
+        options: [
+            "Tecnología",
+            "Fintech",
+            "E-commerce",
+            "Salud y Biotech",
+            "Consultoría",
+            "Educación",
+            "Marketing Digital",
+            "Logística",
+            "Ciberseguridad",
+            "Inteligencia Artificial",
+            "Recursos Humanos",
+            "Legal",
+            "Energía y Sostenibilidad",
+            "Seguros",
+            "Telecomunicaciones",
+            "Automotriz",
+            "Banca y Finanzas",
+            "Gobierno",
+            "Retail",
+            "Startups",
+            "Agroindustria",
+            "Turismo y Hospitalidad",
+        ]
+    },
+    salario: {
+        label: "Rango Salarial",
+        icon: DollarSign,
+        options: ["Hasta $30,000", "$30,000 - $60,000", "$60,000 - $100,000", "$100,000+", "En USD"]
+    }
 }
-const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 
-export default function Home() {
+type FilterKey = keyof typeof FILTROS
+
+export default function HomePage() {
+    const [searchQuery, setSearchQuery] = useState("")
+    const [locationQuery, setLocationQuery] = useState("")
+    const [showFilters, setShowFilters] = useState(false)
+    const [activeFilters, setActiveFilters] = useState<Record<FilterKey, string[]>>({
+        modalidad: [],
+        tipo: [],
+        experiencia: [],
+        industria: [],
+        salario: []
+    })
+    const [firestoreJobs, setFirestoreJobs] = useState<any[]>([])
+
+    // Fetch real jobs from Firestore
+    useEffect(() => {
+        const fetchJobs = async () => {
+            try {
+                const q = query(collection(db, "jobs"), where("status", "==", "active"))
+                const snapshot = await getDocs(q)
+                const jobs = snapshot.docs.map(doc => {
+                    const d = doc.data()
+                    return {
+                        id: doc.id,
+                        titulo: d.title,
+                        empresa: d.companyName || "Empresa",
+                        ubicacion: d.location,
+                        modalidad: d.workMode,
+                        salario: `${d.currency} ${d.salaryMin?.toLocaleString()} - ${d.salaryMax?.toLocaleString()}`,
+                        salaryMin: d.salaryMin,
+                        salaryMax: d.salaryMax,
+                        currency: d.currency,
+                        descripcion: d.description,
+                        tags: d.requirements?.slice(0, 4) || [],
+                        logo: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(d.companyName || "E")}&backgroundColor=1890ff`,
+                        imagen: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=250&fit=crop",
+                        publicado: "Reciente",
+                        isReal: true,
+                        planType: d.planType,
+                        maxApplicants: d.maxApplicants
+                    }
+                })
+                setFirestoreJobs(jobs)
+            } catch (error) {
+                console.error("Error fetching jobs:", error)
+            }
+        }
+        fetchJobs()
+    }, [])
+
+    // Combine mock + real, prioritize paid jobs
+    const allJobs = useMemo(() => {
+        const combined = [...firestoreJobs, ...EMPLEOS]
+        // Sort: paid jobs first, then free, then mock
+        combined.sort((a, b) => {
+            if (a.planType === "free" && b.planType !== "free") return 1
+            if (a.planType !== "free" && b.planType === "free") return -1
+            return 0
+        })
+        return combined
+    }, [firestoreJobs])
+
+    // Toggle filter
+    const toggleFilter = (category: FilterKey, value: string) => {
+        setActiveFilters(prev => {
+            const current = prev[category]
+            const updated = current.includes(value)
+                ? current.filter(v => v !== value)
+                : [...current, value]
+            return { ...prev, [category]: updated }
+        })
+    }
+
+    const clearAllFilters = () => {
+        setActiveFilters({
+            modalidad: [],
+            tipo: [],
+            experiencia: [],
+            industria: [],
+            salario: []
+        })
+        setSearchQuery("")
+        setLocationQuery("")
+    }
+
+    const totalActiveFilters = Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0)
+
+    // FUNCTIONAL FILTERING
+    const filteredJobs = useMemo(() => {
+        return allJobs.filter(job => {
+            // Text search
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase()
+                const matchesText =
+                    job.titulo?.toLowerCase().includes(q) ||
+                    job.empresa?.toLowerCase().includes(q) ||
+                    job.descripcion?.toLowerCase().includes(q) ||
+                    job.tags?.some((t: string) => t.toLowerCase().includes(q))
+                if (!matchesText) return false
+            }
+
+            // Location search
+            if (locationQuery) {
+                const loc = locationQuery.toLowerCase()
+                if (!job.ubicacion?.toLowerCase().includes(loc)) return false
+            }
+
+            // Modalidad filter
+            if (activeFilters.modalidad.length > 0) {
+                if (!activeFilters.modalidad.includes(job.modalidad)) return false
+            }
+
+            // Salary filter
+            if (activeFilters.salario.length > 0) {
+                const matchesSalary = activeFilters.salario.some(range => {
+                    const min = job.salaryMin || 0
+                    if (range === "Hasta $30,000") return min <= 30000
+                    if (range === "$30,000 - $60,000") return min >= 30000 && min <= 60000
+                    if (range === "$60,000 - $100,000") return min >= 60000 && min <= 100000
+                    if (range === "$100,000+") return min >= 100000
+                    if (range === "En USD") return job.currency === "USD"
+                    return true
+                })
+                if (!matchesSalary) return false
+            }
+
+            // Industry filter (match against tags + description)
+            if (activeFilters.industria.length > 0) {
+                const jobText = `${job.titulo} ${job.descripcion} ${job.tags?.join(' ')} ${job.empresa}`.toLowerCase()
+                const matchesIndustry = activeFilters.industria.some(ind =>
+                    jobText.includes(ind.toLowerCase())
+                )
+                if (!matchesIndustry) return false
+            }
+
+            return true
+        })
+    }, [allJobs, searchQuery, locationQuery, activeFilters])
+
     return (
-        <div className="min-h-screen bg-white overflow-hidden">
+        <div className="min-h-screen bg-slate-50">
             <MainHeader />
 
-            {/* ═══════════════ HERO ═══════════════ */}
-            <section className="relative min-h-[88vh] flex items-center bg-white">
-                {/* Subtle background accents */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-[#1890ff]/[0.04] blur-[120px]" />
+            {/* Hero Search Section */}
+            <section className="relative bg-white overflow-hidden border-b border-slate-100">
+                <div className="absolute top-0 left-1/3 w-[700px] h-[500px] rounded-full bg-[#1890ff]/[0.04] blur-[120px]" />
                 <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-indigo-500/[0.03] blur-[100px]" />
 
-                <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 text-center py-20">
-                    <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-8">
-                        {/* Badge */}
-                        <motion.div variants={fadeIn}>
-                            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-[#1890ff] text-sm font-medium">
-                                <Sparkles className="w-4 h-4" />
-                                La nueva era del reclutamiento
-                            </span>
-                        </motion.div>
-
-                        {/* Headline */}
-                        <motion.h1 variants={fadeIn} className="text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 tracking-tight leading-[1.1]">
-                            Conecta con el mejor{" "}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1890ff] via-blue-500 to-indigo-500">
-                                talento profesional
-                            </span>
-                            <br />
-                            de forma ágil y efectiva
-                        </motion.h1>
-
-                        {/* Sub */}
-                        <motion.p variants={fadeIn} className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-                            Optimiza tus procesos de selección con herramientas avanzadas diseñadas
-                            para encontrar al candidato ideal en tiempo récord.
-                        </motion.p>
-
-                        {/* CTAs */}
-                        <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                            <Link href="/empleos">
-                                <Button className="h-14 px-8 text-base font-semibold rounded-xl bg-[#1890ff] hover:bg-blue-600 text-white shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all">
-                                    <Search className="w-5 h-5 mr-2" />
-                                    Buscar Empleos
-                                </Button>
-                            </Link>
-                            <Link href="/registro/empresa">
-                                <Button className="h-14 px-8 text-base font-semibold rounded-xl bg-slate-100 border border-slate-200 text-slate-800 hover:bg-slate-200 transition-all">
-                                    <Building2 className="w-5 h-5 mr-2" />
-                                    Publicar Vacantes
-                                </Button>
-                            </Link>
-                        </motion.div>
-
-                        {/* Trust */}
-                        <motion.div variants={fadeIn} className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-8 text-sm text-slate-500">
-                            {[
-                                { icon: Check, text: "Gratis para candidatos" },
-                                { icon: Shield, text: "Empresas verificadas" },
-                                { icon: Clock, text: "Respuestas en 24h" },
-                            ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                    <item.icon className="w-4 h-4 text-emerald-500" />
-                                    <span>{item.text}</span>
-                                </div>
-                            ))}
-                        </motion.div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ═══════════════ STATS ═══════════════ */}
-            <section className="py-20 bg-white relative">
-                <div className="max-w-5xl mx-auto px-6 lg:px-8">
-                    <motion.div
-                        initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }}
-                        variants={stagger}
-                        className="grid grid-cols-2 md:grid-cols-4 gap-8"
+                <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-16 pb-20">
+                    <motion.h1
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight mb-4"
                     >
-                        {[
-                            { value: "5,000+", label: "Empleos Activos", icon: Briefcase },
-                            { value: "800+", label: "Empresas", icon: Building2 },
-                            { value: "15K+", label: "Candidatos", icon: Users },
-                            { value: "95%", label: "Satisfacción", icon: Star },
-                        ].map((stat, i) => (
-                            <motion.div key={i} variants={fadeIn} className="text-center group">
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 text-[#1890ff] mb-4 group-hover:bg-[#1890ff] group-hover:text-white transition-colors duration-300">
-                                    <stat.icon className="w-5 h-5" />
-                                </div>
-                                <div className="text-3xl font-bold text-slate-900 mb-1">{stat.value}</div>
-                                <div className="text-sm text-slate-500 font-medium">{stat.label}</div>
-                            </motion.div>
-                        ))}
+                        Encuentra tu próximo{" "}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1890ff] to-indigo-500">
+                            desafío profesional
+                        </span>
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 }}
+                        className="text-slate-500 mb-10 max-w-xl mx-auto"
+                    >
+                        Explora oportunidades en las empresas más innovadoras de LATAM
+                    </motion.p>
+
+                    {/* Search Bar */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="max-w-3xl mx-auto"
+                    >
+                        <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Input
+                                    placeholder="Cargo, empresa o habilidad..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-12 h-13 bg-slate-50 border-none rounded-xl text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-[#1890ff] text-base"
+                                />
+                            </div>
+                            <div className="relative flex-1 sm:border-l border-slate-200 sm:pl-3">
+                                <MapPin className="absolute left-4 sm:left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
+                                <LocationInput
+                                    placeholder="Ciudad, región o comuna..."
+                                    value={locationQuery}
+                                    onChange={setLocationQuery}
+                                    className="w-full pl-12 sm:pl-14 h-13 bg-slate-50 border-none rounded-xl text-slate-900 shadow-none hover:bg-slate-100/80 text-base"
+                                />
+                            </div>
+                            <Button className="h-13 px-8 rounded-xl bg-[#1890ff] hover:bg-blue-600 text-white font-semibold text-base shadow-lg shadow-blue-500/25 whitespace-nowrap">
+                                Buscar
+                            </Button>
+                        </div>
+
+                        {/* Quick filters chips */}
+                        <div className="flex flex-wrap justify-center gap-2 mt-5">
+                            {["Remoto", "Tecnología", "Diseño", "Marketing", "En USD"].map(chip => {
+                                const isActive = searchQuery === chip
+                                return (
+                                    <button
+                                        key={chip}
+                                        onClick={() => setSearchQuery(isActive ? "" : chip)}
+                                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${isActive
+                                            ? "bg-[#1890ff] text-white shadow-md shadow-blue-500/25"
+                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800"}`}
+                                    >
+                                        {chip}
+                                    </button>
+                                )
+                            })}
+                        </div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* ═══════════════ CÓMO FUNCIONA ═══════════════ */}
-            <section className="py-24 bg-slate-50">
-                <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
-                        <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-[#1890ff] text-xs font-semibold uppercase tracking-wider mb-4">
-                            Proceso Simple
-                        </motion.div>
-                        <motion.h2 variants={fadeIn} className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                            Tu empleo ideal en 3 pasos
-                        </motion.h2>
-                        <motion.p variants={fadeIn} className="text-lg text-slate-500 max-w-xl mx-auto">
-                            Sin complicaciones. Crea tu perfil, postúlate y entrevístate con IA.
-                        </motion.p>
-                    </motion.div>
-
-                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid md:grid-cols-3 gap-8">
-                        {[
-                            { step: "01", icon: Users, title: "Crea tu perfil", desc: "Completa tu información profesional en menos de 5 minutos. Sube tu CV y destaca tus habilidades.", color: "from-blue-500 to-blue-600" },
-                            { step: "02", icon: Bot, title: "Entrevista con IA", desc: "Realiza entrevistas con avatares inteligentes 24/7. Recibe feedback inmediato sobre tu desempeño.", color: "from-indigo-500 to-purple-600" },
-                            { step: "03", icon: Briefcase, title: "Recibe ofertas", desc: "Las empresas revisan tu perfil y entrevista. Recibe ofertas personalizadas con match score.", color: "from-emerald-500 to-teal-600" },
-                        ].map((item, i) => (
-                            <motion.div key={i} variants={fadeIn} className="relative bg-white rounded-2xl p-8 border border-slate-200 hover:border-slate-300 hover:shadow-xl transition-all duration-300 group">
-                                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} text-white mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
-                                    <item.icon className="w-6 h-6" />
-                                </div>
-                                <div className="text-xs font-bold text-[#1890ff] uppercase tracking-widest mb-3">Paso {item.step}</div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
-                                <p className="text-slate-500 leading-relaxed">{item.desc}</p>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ═══════════════ PARA EMPRESAS ═══════════════ */}
-            <section className="py-24 bg-white">
-                <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
-                        <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold uppercase tracking-wider mb-4">
-                            Para Empresas
-                        </motion.div>
-                        <motion.h2 variants={fadeIn} className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                            Contrata mejor, más rápido
-                        </motion.h2>
-                        <motion.p variants={fadeIn} className="text-lg text-slate-500 max-w-xl mx-auto">
-                            Herramientas de IA que reducen el tiempo de contratación un 70%
-                        </motion.p>
-                    </motion.div>
-
-                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[
-                            { icon: Clock, title: "Entrevistas 24/7", desc: "Candidatos se entrevistan en cualquier momento sin coordinar horarios." },
-                            { icon: Zap, title: "70% Más Rápido", desc: "Reduce el tiempo de contratación con evaluaciones automáticas por IA." },
-                            { icon: TrendingUp, title: "Pre-evaluados", desc: "Candidatos evaluados con scoring de competencias y cultural fit." },
-                            { icon: Shield, title: "Sin Sesgos", desc: "Evaluaciones objetivas basadas en habilidades y potencial." },
-                            { icon: Star, title: "Analytics Avanzado", desc: "Métricas predictivas de retención y desempeño del candidato." },
-                            { icon: Globe, title: "Alcance LATAM", desc: "Accede a talento de toda Latinoamérica desde una sola plataforma." },
-                        ].map((item, i) => (
-                            <motion.div key={i} variants={fadeIn} className="flex gap-4 p-6 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all group">
-                                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center text-[#1890ff] group-hover:bg-[#1890ff] group-hover:text-white transition-colors">
-                                    <item.icon className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-900 mb-1">{item.title}</h3>
-                                    <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ═══════════════ PRICING ═══════════════ */}
-            <section className="py-24 bg-slate-50">
-                <div className="max-w-5xl mx-auto px-6 lg:px-8">
-                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-16">
-                        <motion.h2 variants={fadeIn} className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                            Planes y Precios
-                        </motion.h2>
-                        <motion.p variants={fadeIn} className="text-lg text-slate-500">
-                            Gratis para candidatos. Planes flexibles para empresas.
-                        </motion.p>
-                    </motion.div>
-
-                    <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="grid md:grid-cols-3 gap-6 lg:gap-8">
-                        {[
-                            {
-                                name: "Básico", price: "$99", period: "/mes",
-                                desc: "Perfecto para startups y empresas pequeñas",
-                                features: ["20 entrevistas con IA/mes", "Scoring automático", "2 vacantes activas", "1 usuario"],
-                                popular: false
-                            },
-                            {
-                                name: "Starter", price: "$199", period: "/mes",
-                                desc: "El más popular para PyMEs",
-                                features: ["50 entrevistas con IA/mes", "Auto-scheduling", "5 vacantes activas", "3 usuarios", "Soporte prioritario"],
-                                popular: true
-                            },
-                            {
-                                name: "Professional", price: "$599", period: "/mes",
-                                desc: "Para empresas en crecimiento",
-                                features: ["200 entrevistas con IA/mes", "Analytics avanzado", "15 vacantes activas", "5 usuarios", "Integraciones ATS"],
-                                popular: false
-                            }
-                        ].map((plan, i) => (
-                            <motion.div
-                                key={i}
-                                variants={fadeIn}
-                                className={`relative rounded-2xl p-8 transition-all flex flex-col ${plan.popular
-                                    ? "bg-white border-2 border-[#1890ff] shadow-xl shadow-blue-500/10 scale-[1.02] z-10"
-                                    : "bg-white border border-slate-200 hover:border-slate-300 hover:shadow-lg"
-                                    }`}
+            {/* Main Content */}
+            <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8 pb-20">
+                {/* Controls Bar */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900">Oportunidades Destacadas</h2>
+                        <p className="text-sm text-slate-500 mt-0.5">
+                            <span className="font-semibold text-slate-700">{filteredJobs.length}</span> vacantes encontradas
+                            {totalActiveFilters > 0 && (
+                                <span className="ml-2 text-[#1890ff]">
+                                    ({totalActiveFilters} filtro{totalActiveFilters > 1 ? 's' : ''} activo{totalActiveFilters > 1 ? 's' : ''})
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {totalActiveFilters > 0 && (
+                            <Button
+                                variant="ghost"
+                                onClick={clearAllFilters}
+                                className="text-sm text-slate-500 hover:text-red-500 gap-1"
                             >
-                                {plan.popular && (
-                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                                        <span className="px-4 py-1.5 rounded-full bg-[#1890ff] text-white text-xs font-bold shadow-lg">
-                                            Más Popular
-                                        </span>
-                                    </div>
-                                )}
+                                <X className="w-3.5 h-3.5" />
+                                Limpiar filtros
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`rounded-xl px-5 gap-2 border-slate-200 hover:bg-white ${showFilters ? 'bg-[#1890ff] text-white hover:bg-blue-600 border-[#1890ff] hover:text-white' : ''}`}
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            Filtros
+                            {totalActiveFilters > 0 && (
+                                <span className={`w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold ${showFilters ? 'bg-white text-[#1890ff]' : 'bg-[#1890ff] text-white'}`}>
+                                    {totalActiveFilters}
+                                </span>
+                            )}
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                        </Button>
+                    </div>
+                </div>
 
-                                <div className="text-center mb-8">
-                                    <h3 className="text-lg font-semibold text-slate-900 mb-2">{plan.name}</h3>
-                                    <div className="flex items-baseline justify-center gap-1">
-                                        <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
-                                        <span className="text-slate-500">{plan.period}</span>
-                                    </div>
-                                    <p className="text-sm text-slate-500 mt-2">{plan.desc}</p>
+                {/* Active Filter Chips */}
+                {totalActiveFilters > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-wrap gap-2 mb-6"
+                    >
+                        {(Object.entries(activeFilters) as [FilterKey, string[]][]).map(([category, values]) =>
+                            values.map(value => (
+                                <button
+                                    key={`${category}-${value}`}
+                                    onClick={() => toggleFilter(category, value)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-[#1890ff] text-sm font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
+                                >
+                                    {value}
+                                    <X className="w-3 h-3" />
+                                </button>
+                            ))
+                        )}
+                    </motion.div>
+                )}
+
+                {/* Filters Panel */}
+                <AnimatePresence>
+                    {showFilters && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mb-8 overflow-hidden"
+                        >
+                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                                        <Filter className="w-4 h-4 text-[#1890ff]" />
+                                        Filtrar resultados
+                                    </h3>
+                                    <button onClick={() => setShowFilters(false)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                                        <X className="w-5 h-5" />
+                                    </button>
                                 </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                                    {(Object.entries(FILTROS) as [FilterKey, typeof FILTROS[FilterKey]][]).map(([key, config]) => {
+                                        const Icon = config.icon
+                                        return (
+                                            <div key={key}>
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                                    <Icon className="w-3.5 h-3.5" />
+                                                    {config.label}
+                                                </h4>
+                                                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                                                    {config.options.map((option) => {
+                                                        const isActive = activeFilters[key].includes(option)
+                                                        return (
+                                                            <button
+                                                                key={option}
+                                                                onClick={() => toggleFilter(key, option)}
+                                                                className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-all ${isActive
+                                                                    ? 'bg-[#1890ff] text-white font-medium shadow-sm'
+                                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                                    }`}
+                                                            >
+                                                                {option}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-slate-100">
+                                    <span className="text-sm text-slate-500">
+                                        {totalActiveFilters} filtro{totalActiveFilters !== 1 ? 's' : ''} seleccionado{totalActiveFilters !== 1 ? 's' : ''}
+                                    </span>
+                                    <div className="flex gap-3">
+                                        <Button variant="ghost" onClick={clearAllFilters} className="text-slate-500">
+                                            Limpiar todo
+                                        </Button>
+                                        <Button onClick={() => setShowFilters(false)} className="bg-[#1890ff] hover:bg-blue-600 text-white rounded-xl px-6">
+                                            Ver {filteredJobs.length} resultados
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-                                <ul className="space-y-3 mb-8 flex-1">
-                                    {plan.features.map((f, j) => (
-                                        <li key={j} className="flex items-center gap-3 text-sm text-slate-700">
-                                            <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
+                {/* Job Cards Grid */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <AnimatePresence mode="popLayout">
+                        {filteredJobs.map((empleo, index) => (
+                            <motion.div
+                                key={empleo.id}
+                                layout
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ delay: index * 0.03 }}
+                            >
+                                <Link href={`/empleos/${empleo.id}`}>
+                                    <div className="group h-full bg-white rounded-2xl border border-slate-200 hover:border-[#1890ff]/30 hover:shadow-xl hover:shadow-blue-500/[0.06] transition-all duration-300 overflow-hidden flex flex-col">
+                                        {/* Image */}
+                                        <div className="relative h-36 overflow-hidden bg-slate-100">
+                                            <img
+                                                src={empleo.imagen}
+                                                alt={empleo.empresa}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                            <div className="absolute top-3 right-3 flex gap-2">
+                                                <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/90 backdrop-blur-sm text-slate-700 shadow-sm">
+                                                    {empleo.modalidad}
+                                                </span>
+                                                {empleo.planType === "free" && (
+                                                    <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-400/90 backdrop-blur-sm text-amber-900 shadow-sm">
+                                                        GRATUITO
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
 
-                                <Link href="/registro/empresa" className="mt-auto">
-                                    <Button className={`w-full h-12 rounded-xl font-semibold ${plan.popular
-                                        ? "bg-[#1890ff] hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                                        : "bg-slate-100 hover:bg-slate-200 text-slate-900"
-                                        }`}>
-                                        Comenzar
-                                    </Button>
+                                        {/* Body */}
+                                        <div className="p-5 pt-10 relative flex-1 flex flex-col">
+                                            {/* Logo */}
+                                            <div className="absolute -top-7 left-5">
+                                                <div className="w-14 h-14 rounded-xl bg-white p-1 shadow-lg border border-slate-100 group-hover:scale-105 transition-transform">
+                                                    <img src={empleo.logo} alt={empleo.empresa} className="w-full h-full object-contain rounded-lg" />
+                                                </div>
+                                            </div>
+
+                                            <h3 className="font-bold text-slate-900 group-hover:text-[#1890ff] transition-colors line-clamp-1 mb-1">
+                                                {empleo.titulo}
+                                            </h3>
+                                            <p className="text-sm text-slate-500 flex items-center gap-1.5 mb-3">
+                                                <Building2 className="w-3.5 h-3.5" />
+                                                {empleo.empresa}
+                                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                {empleo.ubicacion}
+                                            </p>
+
+                                            <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-4 flex-1">
+                                                {empleo.descripcion}
+                                            </p>
+
+                                            <div className="flex flex-wrap gap-1.5 mb-4">
+                                                {empleo.tags?.slice(0, 3).map((tag: string) => (
+                                                    <span key={tag} className="px-2 py-0.5 bg-slate-50 text-slate-500 text-xs rounded-md border border-slate-100 group-hover:border-blue-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                                <span className="text-sm font-semibold text-slate-800">{empleo.salario}</span>
+                                                <span className="text-xs font-semibold text-[#1890ff] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                                                    Ver más →
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </Link>
                             </motion.div>
                         ))}
-                    </motion.div>
-
-                    {/* Custom Plan Option */}
-                    <motion.div
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        variants={fadeIn}
-                        className="mt-12 text-center"
-                    >
-                        <div className="inline-flex items-center gap-2 p-1 pl-4 bg-white rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                            <span className="text-sm font-medium text-slate-700">¿Necesitas un plan a medida?</span>
-                            <Link href="/soporte">
-                                <span className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-900 text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer">
-                                    Contáctanos
-                                </span>
-                            </Link>
-                        </div>
-                    </motion.div>
+                    </AnimatePresence>
                 </div>
-            </section>
 
-            {/* ═══════════════ CTA FINAL ═══════════════ */}
-            <section className="relative py-28 bg-slate-50">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-[#1890ff]/[0.04] blur-[120px]" />
-                <div className="relative z-10 max-w-3xl mx-auto px-6 lg:px-8 text-center">
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">
-                            ¿Listo para transformar tu proceso de contratación?
-                        </h2>
-                        <p className="text-lg text-slate-500 mb-10 max-w-xl mx-auto">
-                            Únete a más de 800 empresas que ya confían en Reclut.
+                {filteredJobs.length > 0 && (
+                    <div className="mt-12 text-center">
+                        <Button variant="outline" className="rounded-xl px-8 py-5 h-auto border-slate-200 hover:bg-white text-slate-600 font-medium">
+                            Cargar más oportunidades
+                        </Button>
+                    </div>
+                )}
+
+                {filteredJobs.length === 0 && (
+                    <div className="text-center py-20">
+                        <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                            <Search className="w-10 h-10 text-slate-300" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-700 mb-2">Sin resultados</h3>
+                        <p className="text-slate-500 mb-6">
+                            No encontramos vacantes con estos filtros. Intenta ampliar tu búsqueda.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link href="/registro">
-                                <Button className="h-14 px-8 text-base font-semibold rounded-xl bg-[#1890ff] hover:bg-blue-600 text-white shadow-xl shadow-blue-500/25 transition-all">
-                                    Comenzar Gratis
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
-                            </Link>
-                            <Link href="#">
-                                <Button className="h-14 px-8 text-base font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all">
-                                    <Play className="w-5 h-5 mr-2" />
-                                    Ver Demo
-                                </Button>
-                            </Link>
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* ═══════════════ FOOTER ═══════════════ */}
-            <footer className="bg-white border-t border-slate-200">
-                <div className="max-w-6xl mx-auto px-6 lg:px-8 py-16">
-                    <div className="grid md:grid-cols-5 gap-8 mb-12">
-                        <div className="md:col-span-2">
-                            <div className="flex items-center gap-2.5 mb-4">
-                                <div className="w-8 h-8 rounded-lg bg-[#1890ff] flex items-center justify-center">
-                                    <span className="text-white font-bold text-sm">R</span>
-                                </div>
-                                <span className="text-xl font-bold text-slate-900">Re<span className="text-[#1890ff]">clut</span></span>
-                            </div>
-                            <p className="text-sm text-slate-500 max-w-xs leading-relaxed">
-                                La plataforma de reclutamiento con IA más avanzada de Latinoamérica.
-                            </p>
-                        </div>
-                        {[
-                            { title: "Producto", links: ["Características", "Precios", "Integraciones"] },
-                            { title: "Recursos", links: ["Blog", "Guías", "API Docs"] },
-                            { title: "Empresa", links: ["Nosotros", "Carreras", "Contacto"] }
-                        ].map((section, i) => (
-                            <div key={i}>
-                                <h4 className="text-sm font-semibold text-slate-900 mb-4">{section.title}</h4>
-                                <ul className="space-y-2.5">
-                                    {section.links.map((link, j) => (
-                                        <li key={j}>
-                                            <Link href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-                                                {link}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
+                        <Button
+                            onClick={clearAllFilters}
+                            variant="outline"
+                            className="rounded-xl px-6"
+                        >
+                            Limpiar todos los filtros
+                        </Button>
                     </div>
-                    <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p className="text-xs text-slate-400">© {new Date().getFullYear()} Reclut. Todos los derechos reservados.</p>
-                        <div className="flex gap-6">
-                            {["Privacidad", "Términos", "Cookies"].map((link, i) => (
-                                <Link key={i} href="#" className="text-xs text-slate-400 hover:text-slate-700 transition-colors">{link}</Link>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </footer>
+                )}
+            </main>
         </div>
     )
 }

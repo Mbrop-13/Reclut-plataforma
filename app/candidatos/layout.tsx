@@ -21,7 +21,7 @@ export default function CandidatosLayout({
 
                     <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
                         <Link
-                            href="/empleos"
+                            href="/"
                             className="flex items-center gap-2 transition-colors hover:text-blue-600"
                         >
                             <Briefcase className="h-4 w-4" />

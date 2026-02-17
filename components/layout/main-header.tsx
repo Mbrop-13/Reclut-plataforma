@@ -71,8 +71,8 @@ export function MainHeader() {
     const isHome = pathname === '/'
 
     const navLinks = [
-        ...(!isCompany ? [{ href: "/empleos", label: "Empleos" }] : []),
-        ...(!user ? [{ href: "/registro/empresa", label: "Para Empresas" }] : []),
+        ...(!isCompany ? [{ href: "/", label: "Empleos" }] : []),
+        ...(!user ? [{ href: "/para-empresas", label: "Para Empresas" }] : []),
     ]
 
     return (
@@ -166,7 +166,7 @@ export function MainHeader() {
                                                     <User className="mr-3 h-4 w-4 text-slate-400" />
                                                     <span>Mi Perfil</span>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => router.push("/empleos")} className="px-4 py-2.5 cursor-pointer">
+                                                <DropdownMenuItem onClick={() => router.push("/")} className="px-4 py-2.5 cursor-pointer">
                                                     <Briefcase className="mr-3 h-4 w-4 text-slate-400" />
                                                     <span>Buscar Empleos</span>
                                                 </DropdownMenuItem>
