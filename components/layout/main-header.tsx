@@ -12,7 +12,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu"
-import { LayoutDashboard, LogOut, User, Briefcase, Settings, Menu, X } from "lucide-react"
+import { LayoutDashboard, LogOut, User, Briefcase, Settings, Menu, X, Users, Play, FileText } from "lucide-react"
 import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -61,17 +61,18 @@ export function MainHeader() {
     }
 
     const getInitials = () => {
+        if (userProfile?.companyName) return userProfile.companyName.substring(0, 2).toUpperCase()
         if (userProfile?.name) return userProfile.name.substring(0, 2).toUpperCase()
         if (user?.email) return user.email.substring(0, 2).toUpperCase()
         return "U"
     }
 
-    const isCompany = userProfile?.role === 'company'
+    const isCompany = !!(userProfile?.role === 'RECRUITER' || userProfile?.companyName || userProfile?.userType === 'company')
     const isHome = pathname === '/'
 
     const navLinks = [
         ...(!isCompany ? [{ href: "/empleos", label: "Empleos" }] : []),
-        { href: "/registro/empresa", label: "Para Empresas" },
+        ...(!user ? [{ href: "/registro/empresa", label: "Para Empresas" }] : []),
     ]
 
     return (
@@ -79,7 +80,7 @@ export function MainHeader() {
             <motion.header
                 initial={{ y: 0 }}
                 animate={{ y: visible ? 0 : -100 }}
-                transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                transition={{ duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
                     ? "bg-white/90 backdrop-blur-2xl border-b border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                     : "bg-white/80 backdrop-blur-xl"
@@ -129,23 +130,47 @@ export function MainHeader() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="w-56 rounded-xl shadow-xl border-slate-200/80 mt-2" align="end" forceMount>
                                         <DropdownMenuLabel className="font-normal px-4 py-3">
-                                            <p className="text-sm font-semibold text-slate-900">{userProfile?.name || "Usuario"}</p>
+                                            <p className="text-sm font-semibold text-slate-900">{isCompany ? userProfile?.companyName : userProfile?.name || "Usuario"}</p>
                                             <p className="text-xs text-slate-500 mt-0.5">{user.email}</p>
+                                            <span className={`inline-block mt-1.5 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${isCompany ? 'bg-blue-50 text-[#1890ff]' : 'bg-emerald-50 text-emerald-600'}`}>
+                                                {isCompany ? 'Empresa' : 'Candidato'}
+                                            </span>
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/empresas/dashboard" : "/candidate/dashboard")} className="px-4 py-2.5 cursor-pointer">
-                                            <LayoutDashboard className="mr-3 h-4 w-4 text-slate-400" />
-                                            <span>Mi Panel</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => router.push(isCompany ? "/empresas/configuracion" : "/candidate/profile")} className="px-4 py-2.5 cursor-pointer">
-                                            <User className="mr-3 h-4 w-4 text-slate-400" />
-                                            <span>Mi Perfil</span>
-                                        </DropdownMenuItem>
-                                        {!isCompany && (
-                                            <DropdownMenuItem onClick={() => router.push("/empleos")} className="px-4 py-2.5 cursor-pointer">
-                                                <Briefcase className="mr-3 h-4 w-4 text-slate-400" />
-                                                <span>Buscar Empleos</span>
-                                            </DropdownMenuItem>
+                                        {isCompany ? (
+                                            <>
+                                                <DropdownMenuItem onClick={() => router.push("/empresas/dashboard")} className="px-4 py-2.5 cursor-pointer">
+                                                    <LayoutDashboard className="mr-3 h-4 w-4 text-slate-400" />
+                                                    <span>Dashboard</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => router.push("/empresas/mis-publicaciones")} className="px-4 py-2.5 cursor-pointer">
+                                                    <Briefcase className="mr-3 h-4 w-4 text-slate-400" />
+                                                    <span>Mis Publicaciones</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => router.push("/empresas/candidatos")} className="px-4 py-2.5 cursor-pointer">
+                                                    <Users className="mr-3 h-4 w-4 text-slate-400" />
+                                                    <span>Candidatos</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => router.push("/empresas/configuracion")} className="px-4 py-2.5 cursor-pointer">
+                                                    <Settings className="mr-3 h-4 w-4 text-slate-400" />
+                                                    <span>Configuración</span>
+                                                </DropdownMenuItem>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <DropdownMenuItem onClick={() => router.push("/candidate/dashboard")} className="px-4 py-2.5 cursor-pointer">
+                                                    <LayoutDashboard className="mr-3 h-4 w-4 text-slate-400" />
+                                                    <span>Mi Panel</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => router.push("/candidate/profile")} className="px-4 py-2.5 cursor-pointer">
+                                                    <User className="mr-3 h-4 w-4 text-slate-400" />
+                                                    <span>Mi Perfil</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => router.push("/empleos")} className="px-4 py-2.5 cursor-pointer">
+                                                    <Briefcase className="mr-3 h-4 w-4 text-slate-400" />
+                                                    <span>Buscar Empleos</span>
+                                                </DropdownMenuItem>
+                                            </>
                                         )}
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={handleSignOut} className="px-4 py-2.5 text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer">
