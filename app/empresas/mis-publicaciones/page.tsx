@@ -297,8 +297,12 @@ export default function MisPublicacionesPage() {
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-slate-500">
                                             <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {selectedJob.location}</span>
-                                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {selectedJob.workMode}</span>
-                                            <span className="flex items-center gap-1 font-medium text-slate-700">{selectedJob.currency} {selectedJob.salaryMin?.toLocaleString()} - {selectedJob.salaryMax?.toLocaleString()}</span>
+                                            <span className="flex items-center gap-1" ><Clock className="w-3.5 h-3.5" /> {selectedJob.workMode}</span>
+                                            {selectedJob.showSalary === false ? (
+                                                <span className="flex items-center gap-1 font-medium text-slate-500">A convenir</span>
+                                            ) : (selectedJob.salaryMin || selectedJob.salaryMax) ? (
+                                                <span className="flex items-center gap-1 font-medium text-slate-700">{selectedJob.currency} {selectedJob.salaryMin?.toLocaleString()} - {selectedJob.salaryMax?.toLocaleString()}</span>
+                                            ) : null}
                                         </div>
                                         {/* Applicant limit indicator for free plan */}
                                         {selectedJob.maxApplicants && (

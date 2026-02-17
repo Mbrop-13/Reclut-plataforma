@@ -23,6 +23,7 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     const [company, setCompany] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [currentUser, setCurrentUser] = useState<any>(null)
+    const [userProfile, setUserProfile] = useState<any>(null)
     const router = useRouter()
 
     const { scrollY } = useScroll()
@@ -88,8 +89,16 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
             }
         }
 
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setCurrentUser(user)
+            if (user) {
+                try {
+                    const profileDoc = await getDoc(doc(db, "users", user.uid))
+                    if (profileDoc.exists()) setUserProfile(profileDoc.data())
+                } catch (e) { console.error(e) }
+            } else {
+                setUserProfile(null)
+            }
         })
 
         fetchJob()
@@ -97,10 +106,17 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     }, [params.id])
 
 
+    const isCompanyUser = !!(userProfile?.role === 'RECRUITER' || userProfile?.companyName || userProfile?.userType === 'company')
+
     const handleApplyClick = async () => {
         if (!currentUser) {
             toast.error("Debes iniciar sesión para postularte")
             router.push("/login")
+            return
+        }
+
+        if (isCompanyUser) {
+            toast.error("Las cuentas de empresa no pueden postularse a otras publicaciones")
             return
         }
 
@@ -290,29 +306,63 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
                                     <span className="flex items-center gap-1.5 font-medium">
                                         <Building2 className="w-4 h-4 text-slate-400" />
-                                        {company?.name}
+                                        {company?.name || job.companyName}
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <MapPin className="w-4 h-4 text-[#1890ff]" />
                                         {job.location}
                                     </span>
-                                    <span className="flex items-center gap-1.5 font-semibold text-slate-700">
-                                        <DollarSign className="w-4 h-4 text-green-600" />
-                                        {job.currency} {job.salaryMin?.toLocaleString()} - {job.salaryMax?.toLocaleString()}
-                                    </span>
+                                    {job.showSalary === false ? (
+                                        <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                                            <DollarSign className="w-4 h-4 text-green-600" />
+                                            A convenir
+                                        </span>
+                                    ) : (job.salaryMin || job.salaryMax) ? (
+                                        <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                                            <DollarSign className="w-4 h-4 text-green-600" />
+                                            {job.currency} {job.salaryMin?.toLocaleString()} - {job.salaryMax?.toLocaleString()}
+                                        </span>
+                                    ) : null}
+                                </div>
+                                {/* Extra badges */}
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                    {job.jobType && (
+                                        <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                                            {job.jobType}
+                                        </span>
+                                    )}
+                                    {job.experienceLevel && (
+                                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
+                                            {job.experienceLevel}
+                                        </span>
+                                    )}
+                                    {job.industry && (
+                                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                                            {job.industry}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex-shrink-0 mt-2 md:mt-0">
-                                <Button
-                                    className={`h-12 px-8 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-[1.02] transition-all w-full md:w-auto ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    onClick={handleApplyClick}
-                                    disabled={isLimitReached}
-                                >
-                                    {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
-                                </Button>
-                                <p className="text-xs text-center text-slate-400 mt-1.5">
-                                    {isLimitReached ? 'Límite de postulantes alcanzado' : 'Aplica en 2 minutos'}
-                                </p>
+                                {isCompanyUser ? (
+                                    <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
+                                        <p className="text-sm text-slate-500 font-medium">Vista de empresa</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">Las cuentas de empresa no pueden postularse</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Button
+                                            className={`h-12 px-8 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-[1.02] transition-all w-full md:w-auto ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            onClick={handleApplyClick}
+                                            disabled={isLimitReached}
+                                        >
+                                            {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
+                                        </Button>
+                                        <p className="text-xs text-center text-slate-400 mt-1.5">
+                                            {isLimitReached ? 'Límite de postulantes alcanzado' : 'Aplica en 2 minutos'}
+                                        </p>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -329,6 +379,31 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                 >
                     {/* Left Column — stacked sections */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Address */}
+                        {job.address && (
+                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-[#1890ff]" />
+                                    Ubicación
+                                </h3>
+                                <p className="text-slate-700 text-[15px]">{job.address}</p>
+                            </div>
+                        )}
+
+                        {/* Images Gallery */}
+                        {job.images && job.images.length > 0 && (
+                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Lugar de Trabajo</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {job.images.map((img: string, i: number) => (
+                                        <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden border border-slate-100">
+                                            <img src={img} alt={`Oficina ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Skills Tags */}
                         {job.requirements?.length > 0 && (
                             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
@@ -443,13 +518,19 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
 
                             {/* Second CTA */}
                             <div className="mt-6 pt-5 border-t border-slate-100">
-                                <Button
-                                    className={`w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 transition-all ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    onClick={handleApplyClick}
-                                    disabled={isLimitReached}
-                                >
-                                    {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
-                                </Button>
+                                {isCompanyUser ? (
+                                    <div className="text-center py-2">
+                                        <p className="text-xs text-slate-400">Las cuentas de empresa no pueden postularse</p>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        className={`w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 transition-all ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        onClick={handleApplyClick}
+                                        disabled={isLimitReached}
+                                    >
+                                        {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>

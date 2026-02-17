@@ -71,8 +71,8 @@ export function MainHeader() {
     const isHome = pathname === '/'
 
     const navLinks = [
-        ...(!isCompany ? [{ href: "/", label: "Empleos" }] : []),
-        ...(!user ? [{ href: "/para-empresas", label: "Para Empresas" }] : []),
+        { href: "/", label: "Empleos" },
+        { href: "/para-empresas", label: "Para Empresas" },
     ]
 
     return (
