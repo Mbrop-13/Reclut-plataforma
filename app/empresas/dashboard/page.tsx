@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { db, auth } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
+import { collection, query, where, getDocs, orderBy, limit, documentId } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 
 export default function EmpresaDashboard() {
@@ -26,30 +27,78 @@ export default function EmpresaDashboard() {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const userDoc = await import("firebase/firestore").then(m => m.getDoc(m.doc(db, "users", user.uid)))
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data()
-                        setCompanyName(userData.companyName || "Empresa")
-                    }
-                } catch (error) {
-                    console.error("Error fetching data:", error)
-                } finally {
-                    setLoading(false)
-                }
-            } else {
+            if (!user) {
                 router.push("/login")
+                return
+            }
+
+            try {
+                // 1. Fetch User/Company Data
+                const userDoc = await import("firebase/firestore").then(m => m.getDoc(m.doc(db, "users", user.uid)))
+                if (userDoc.exists()) {
+                    setCompanyName(userDoc.data().companyName || "Empresa")
+                }
+
+                // 2. Fetch Jobs
+                const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", user.uid))
+                const jobsSnapshot = await getDocs(jobsQuery)
+                const jobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[]
+
+                const activeJobsCount = jobs.filter(j => j.status === 'active').length
+                const jobIds = jobs.map(j => j.id)
+
+                // 3. Fetch Applications (Chunked due to 'in' limit of 10)
+                let allApplications: any[] = []
+                if (jobIds.length > 0) {
+                    const chunks = []
+                    for (let i = 0; i < jobIds.length; i += 10) {
+                        chunks.push(jobIds.slice(i, i + 10))
+                    }
+
+                    for (const chunk of chunks) {
+                        const q = query(collection(db, "job_applications"), where("jobId", "in", chunk))
+                        const snap = await getDocs(q)
+                        allApplications = [...allApplications, ...snap.docs.map(d => ({ id: d.id, ...d.data() }))]
+                    }
+                }
+
+                // 4. Calculate Stats
+                const totalApps = allApplications.length
+                const interviews = allApplications.filter(a => a.status === 'interview' || a.status === 'contacted').length // Assuming 'contacted' or 'interview'
+                const conversion = totalApps > 0 ? Math.round((interviews / totalApps) * 100) : 0
+
+                setStats({
+                    activeJobs: activeJobsCount,
+                    totalApplications: totalApps,
+                    interviews: interviews,
+                    conversionRate: conversion
+                })
+
+                // 5. Recent Applications
+                // Sort by appliedAt or createdAt desc. Need to handle different timestamp fields if any.
+                // For now just take last 5 from the fetched list (assuming fetching might not guarantee order without orderBy)
+                // To do it right, we sort client side since we fetched all
+                allApplications.sort((a, b) => {
+                    const tA = a.createdAt?.seconds || 0
+                    const tB = b.createdAt?.seconds || 0
+                    return tB - tA
+                })
+                setRecentApplications(allApplications.slice(0, 5))
+
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error)
+            } finally {
+                setLoading(false)
             }
         })
         return () => unsubscribe()
     }, [router])
 
     const KPIS = [
-        { label: "Publicaciones Activas", value: stats.activeJobs.toString(), icon: Briefcase, change: "0 nuevas", color: "text-[#1890ff] bg-blue-50" },
-        { label: "Postulaciones", value: stats.totalApplications.toString(), icon: FileText, change: "0 esta semana", color: "text-emerald-600 bg-emerald-50" },
-        { label: "Entrevistas IA", value: stats.interviews.toString(), icon: Play, change: "0 pendientes", color: "text-indigo-600 bg-indigo-50" },
-        { label: "Tasa de Conversión", value: `${stats.conversionRate}%`, icon: TrendingUp, change: "0% vs anterior", color: "text-amber-600 bg-amber-50" },
+        { label: "Publicaciones Activas", value: stats.activeJobs.toString(), icon: Briefcase, change: "En total", color: "text-[#1890ff] bg-blue-50" },
+        { label: "Postulaciones", value: stats.totalApplications.toString(), icon: FileText, change: "Total histórico", color: "text-emerald-600 bg-emerald-50" },
+        { label: "Entrevistas/Contactados", value: stats.interviews.toString(), icon: Play, change: `${stats.conversionRate}% conversión`, color: "text-indigo-600 bg-indigo-50" },
+        { label: "Tasa de Conversión", value: `${stats.conversionRate}%`, icon: TrendingUp, change: "Global", color: "text-amber-600 bg-amber-50" },
     ]
 
     const QUICK_ACTIONS = [

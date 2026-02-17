@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,7 +10,7 @@ import {
     Image as ImageIcon, X, Upload, Plus, Clock, Layers, Building2,
     Globe, GripVertical, Eye, EyeOff, Trash2
 } from "lucide-react"
-import { doc, getDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore"
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, addDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { onAuthStateChanged } from "firebase/auth"
@@ -39,6 +39,9 @@ const CURRENCIES = [
 
 export default function NuevaPublicacionPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const editJobId = searchParams.get('edit')
+    const isEditing = !!editJobId
     const [isLoading, setIsLoading] = useState(true)
     const [plan, setPlan] = useState<string>("free")
     const [existingJobCount, setExistingJobCount] = useState(0)
@@ -111,6 +114,53 @@ export default function NuevaPublicacionPage() {
         return () => unsubscribe()
     }, [router])
 
+    // Fetch job data if editing
+    useEffect(() => {
+        if (!editJobId) return
+
+        const fetchJob = async () => {
+            setIsLoading(true)
+            try {
+                const jobDoc = await getDoc(doc(db, "jobs", editJobId))
+                if (jobDoc.exists()) {
+                    const data = jobDoc.data()
+                    setTitle(data.title || "")
+                    setLocation(data.location || "")
+                    setAddress(data.address || "")
+                    setWorkMode(data.workMode || "Presencial")
+                    setJobType(data.jobType || "Tiempo Completo")
+                    setExperienceLevel(data.experienceLevel || "3-5 años")
+                    setIndustry(data.industry || "")
+                    setShowSalary(data.showSalary !== false)
+                    setSalaryMin(data.salaryMin?.toString() || "")
+                    setSalaryMax(data.salaryMax?.toString() || "")
+                    setCurrency(data.currency || "USD")
+                    setDescription(data.description || "")
+                    setResponsibilities(data.responsibilities?.join("\n") || "")
+                    setRequirements(data.requirements?.join("\n") || "")
+                    setBenefits(data.benefits?.join("\n") || "")
+                    setMinScore(data.minScore || 75)
+                    setEnableAvatarInterview(data.enableAvatarInterview || false)
+
+                    // Handle images if they exist
+                    if (data.images && Array.isArray(data.images)) {
+                        setImages(data.images.map((url: string) => ({ file: new File([], "image"), url })))
+                    }
+                } else {
+                    toast.error("La publicación no existe")
+                    router.push("/empresas/mis-publicaciones")
+                }
+            } catch (error) {
+                console.error("Error fetching job:", error)
+                toast.error("Error al cargar la publicación")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchJob()
+    }, [editJobId, router])
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
         if (!files) return
@@ -169,7 +219,7 @@ export default function NuevaPublicacionPage() {
             toast.error("El salario mínimo no puede ser mayor al máximo"); return
         }
 
-        if (isFreePlan && existingJobCount >= 1) {
+        if (!isEditing && isFreePlan && existingJobCount >= 1) {
             toast.error("Ya alcanzaste el límite de 1 publicación en el plan gratuito")
             return
         }
@@ -212,14 +262,24 @@ export default function NuevaPublicacionPage() {
                 jobData.enableAvatarInterview = false
             }
 
-            const { collection, addDoc } = await import("firebase/firestore")
-            await addDoc(collection(db, "jobs"), jobData)
+            const { collection, addDoc, updateDoc, doc } = await import("firebase/firestore")
 
-            toast.success("¡Publicación creada exitosamente!")
+            if (isEditing) {
+                await updateDoc(doc(db, "jobs", editJobId), {
+                    ...jobData,
+                    updatedAt: serverTimestamp(),
+                    createdAt: undefined // Don't update creation date
+                })
+                toast.success("¡Publicación actualizada exitosamente!")
+            } else {
+                await addDoc(collection(db, "jobs"), jobData)
+                toast.success("¡Publicación creada exitosamente!")
+            }
+
             router.push("/empresas/mis-publicaciones")
         } catch (error) {
             console.error(error)
-            toast.error("Error al crear la publicación")
+            toast.error(`Error al ${isEditing ? "actualizar" : "crear"} la publicación`)
         } finally {
             setIsSubmitting(false)
         }
@@ -290,10 +350,10 @@ export default function NuevaPublicacionPage() {
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-                            Nueva Publicación
+                            {isEditing ? "Editar Publicación" : "Nueva Publicación"}
                         </h1>
                         <p className="text-slate-500 mt-1">
-                            Completa la información para publicar tu oferta de empleo
+                            {isEditing ? "Modifica los detalles de tu oferta de empleo" : "Completa la información para publicar tu oferta de empleo"}
                         </p>
                     </div>
                     <div className="hidden md:flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-2.5 shadow-sm">
@@ -767,7 +827,7 @@ export default function NuevaPublicacionPage() {
                         ) : (
                             <>
                                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Publicar Oferta
+                                {isEditing ? "Guardar Cambios" : "Publicar Oferta"}
                             </>
                         )}
                     </Button>
