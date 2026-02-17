@@ -10,7 +10,7 @@ import {
     Image as ImageIcon, X, Upload, Plus, Clock, Layers, Building2,
     Globe, GripVertical, Eye, EyeOff, Trash2
 } from "lucide-react"
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
+import { doc, getDoc, collection, query, where, getDocs, serverTimestamp } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { onAuthStateChanged } from "firebase/auth"
@@ -195,7 +195,7 @@ export default function NuevaPublicacionPage() {
                 companyId: auth.currentUser?.uid,
                 companyName: companyName,
                 status: "active",
-                createdAt: new Date(),
+                createdAt: serverTimestamp(),
                 requirements: requirements.split("\n").filter(Boolean),
                 responsibilities: responsibilities.split("\n").filter(Boolean),
                 benefits: benefits.split("\n").filter(Boolean),
