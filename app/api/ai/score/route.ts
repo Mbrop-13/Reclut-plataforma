@@ -200,7 +200,7 @@ Justificación: [Explicación detallada]
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": "qwen/qwen3-next-80b-a3b-instruct:free",
+                "model": "qwen/qwen3-235b-a22b-thinking-2507",
                 "messages": [
                     { "role": "system", "content": "Eres un asistente de reclutamiento experto. Responde siempre en JSON válido." },
                     { "role": "user", "content": SCORING_PROMPT }

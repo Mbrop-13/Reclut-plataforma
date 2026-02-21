@@ -228,11 +228,11 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
 
             const applicationRef = await addDoc(collection(db, "applications"), {
                 jobId: job.id,
-                jobTitle: job.title,
+                jobTitle: job.title || "Oferta de Empleo",
                 candidateId: currentUser.uid,
-                candidateName: candidateProfile.name,
-                contactEmail: currentUser.email,
-                companyId: job.companyId,
+                candidateName: candidateProfile.name || currentUser.email || "Candidato",
+                contactEmail: currentUser.email || "",
+                companyId: job.companyId || "unknown",
                 status: "new",
                 createdAt: serverTimestamp(),
                 aiScore: null
