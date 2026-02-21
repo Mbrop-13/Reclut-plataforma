@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
     Plus, Briefcase, MapPin, Clock, Users, MoreHorizontal,
     Search, Filter, ChevronRight, Mail, Phone, Calendar, Check, Bookmark,
-    Crown, AlertTriangle, Edit2, Archive, PlayCircle, Eye, ArrowUpRight, Sparkles
+    Crown, AlertTriangle, Edit2, Archive, PlayCircle, Eye, ArrowUpRight, Sparkles,
+    DollarSign
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
