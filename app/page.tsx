@@ -569,12 +569,6 @@ export default function HomePage() {
                                                 <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/90 backdrop-blur-sm text-slate-700 shadow-sm">
                                                     {empleo.modalidad}
                                                 </span>
-                                                {userProfile && (
-                                                    <span className="px-2 py-1 rounded-lg text-xs font-bold bg-green-500/90 backdrop-blur-sm text-white shadow-sm flex items-center gap-1">
-                                                        <Sparkles className="w-3 h-3" />
-                                                        {empleo.totalScore}% Match
-                                                    </span>
-                                                )}
                                                 {empleo.planType === "free" && !userProfile && (
                                                     <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-400/90 backdrop-blur-sm text-amber-900 shadow-sm">
                                                         GRATUITO

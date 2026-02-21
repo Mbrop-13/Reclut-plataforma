@@ -36,6 +36,10 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
     const [isLimitReached, setIsLimitReached] = useState(false)
 
+    // OpenRouter AI Analysis State
+    const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+    const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
+
 
 
     useEffect(() => {
@@ -107,6 +111,51 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
 
 
     const isCompanyUser = !!(userProfile?.role === 'RECRUITER' || userProfile?.companyName || userProfile?.userType === 'company')
+
+    const handleAIAnalysis = async () => {
+        if (!currentUser || !userProfile) {
+            toast.error("Debes iniciar sesión y tener tu perfil completo para usar la IA.")
+            router.push("/login")
+            return
+        }
+
+        setIsAiAnalyzing(true)
+        setAiAnalysisResult(null)
+        try {
+            const endpointJob = {
+                title: job.title,
+                description: job.description,
+                requirements: job.requirements,
+                responsibilities: job.responsibilities,
+                benefits: job.benefits
+            }
+
+            const endpointUser = {
+                name: userProfile.displayName || currentUser.email,
+                skills: userProfile.skills || [],
+                experience: userProfile.experience || [],
+                education: userProfile.education || [],
+                about: userProfile.about || ""
+            }
+
+            const res = await fetch('/api/ai/analyze-candidate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userProfile: endpointUser, jobDescription: endpointJob })
+            })
+
+            if (!res.ok) throw new Error("Error en el proveedor de IA")
+
+            const data = await res.json()
+            setAiAnalysisResult(data)
+            toast.success("Análisis completado exitosamente")
+        } catch (error) {
+            console.error('AI Analysis failed:', error)
+            toast.error("Hubo un problema al contactar la IA. Intenta más tarde.")
+        } finally {
+            setIsAiAnalyzing(false)
+        }
+    }
 
     const handleApplyClick = async () => {
         if (!currentUser) {
@@ -534,6 +583,64 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                                 </div>
                             )}
 
+                            {/* AI Analysis Section (Candidates Only) */}
+                            {!isCompanyUser && currentUser && (
+                                <div className="mt-6 pt-5 border-t border-slate-100">
+                                    <h4 className="font-bold text-sm text-slate-900 mb-3 flex items-center gap-2">
+                                        <BrainCircuit className="w-4 h-4 text-purple-500" />
+                                        Copiloto IA
+                                    </h4>
+
+                                    {!aiAnalysisResult ? (
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleAIAnalysis}
+                                            disabled={isAiAnalyzing}
+                                            className="w-full h-11 rounded-xl text-sm font-semibold border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            {isAiAnalyzing ? (
+                                                <><Loader2 className="w-4 h-4 animate-spin" /> Analizando tu perfil...</>
+                                            ) : (
+                                                <><Sparkles className="w-4 h-4" /> Analizar mi perfil vs Oferta</>
+                                            )}
+                                        </Button>
+                                    ) : (
+                                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-purple-50/50 rounded-xl p-4 border border-purple-100/50">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-xs font-bold text-slate-500 uppercase">Compatibilidad</span>
+                                                <span className={`text-sm font-extrabold px-2.5 py-1 rounded-lg ${aiAnalysisResult.matchPercentage >= 75 ? 'bg-green-100 text-green-700' : aiAnalysisResult.matchPercentage >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {aiAnalysisResult.matchPercentage}%
+                                                </span>
+                                            </div>
+
+                                            {aiAnalysisResult.strengths?.length > 0 && (
+                                                <div className="mb-3">
+                                                    <span className="text-xs font-semibold text-green-600 mb-1 block flex items-center gap-1"><Check className="w-3 h-3" /> Puntos Fuertes</span>
+                                                    <ul className="text-xs text-slate-600 space-y-1 pl-4 list-disc marker:text-green-400">
+                                                        {aiAnalysisResult.strengths.slice(0, 2).map((s: string, i: number) => <li key={i}>{s}</li>)}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {aiAnalysisResult.gaps?.length > 0 && (
+                                                <div className="mb-3">
+                                                    <span className="text-xs font-semibold text-amber-600 mb-1 block flex items-center gap-1"><BrainCircuit className="w-3 h-3" /> Brechas</span>
+                                                    <ul className="text-xs text-slate-600 space-y-1 pl-4 list-disc marker:text-amber-400">
+                                                        {aiAnalysisResult.gaps.slice(0, 2).map((g: string, i: number) => <li key={i}>{g}</li>)}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            <div className="pt-3 border-t border-purple-100/50 mt-1">
+                                                <p className="text-xs text-slate-700 italic leading-relaxed">
+                                                    "{aiAnalysisResult.recommendation}"
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Second CTA */}
                             <div className="mt-6 pt-5 border-t border-slate-100">
                                 {isCompanyUser ? (
@@ -551,7 +658,7 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                                             <Button
                                                 variant="outline"
                                                 className="w-full h-12 rounded-xl text-base font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                                                onClick={() => toast.info("La función de comparar estará disponible pronto")}
+                                                onClick={() => toast.info("Compara con tu perfil desde el Dashboard")}
                                             >
                                                 Comparar Publicación
                                             </Button>

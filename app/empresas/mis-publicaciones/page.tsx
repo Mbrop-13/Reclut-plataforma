@@ -42,6 +42,11 @@ export default function MisPublicacionesPage() {
     const [editForm, setEditForm] = useState({ title: "", location: "", description: "" })
     const [isSaving, setIsSaving] = useState(false)
 
+    // AI Comparing State
+    const [isComparingModalOpen, setIsComparingModalOpen] = useState(false)
+    const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+    const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
+
     const isFreePlan = !plan || plan === "free"
 
     // Initial Fetch
@@ -219,6 +224,43 @@ export default function MisPublicacionesPage() {
             toast.error("Error al guardar cambios")
         } finally {
             setIsSaving(false)
+        }
+    }
+
+    const handleCompareWithAi = async () => {
+        if (!selectedJob) return
+        if (isFreePlan) {
+            toast.error("Mejora tu plan para comparar publicaciones con IA.")
+            return
+        }
+
+        setIsComparingModalOpen(true)
+        setIsAiAnalyzing(true)
+        setAiAnalysisResult(null)
+
+        try {
+            let marketJobs: any[] = []
+            if (selectedJob.industry) {
+                const marketQuery = query(collection(db, "jobs"), where("industry", "==", selectedJob.industry))
+                const snapshot = await getDocs(marketQuery)
+                marketJobs = snapshot.docs.map(d => d.data()).filter(j => j.title !== selectedJob.title).slice(0, 4)
+            }
+
+            const res = await fetch('/api/ai/analyze-posting', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ draftJob: selectedJob, marketJobs })
+            })
+
+            if (!res.ok) throw new Error("Error IA")
+            const data = await res.json()
+            setAiAnalysisResult(data)
+        } catch (error) {
+            console.error("AI Compare failed", error)
+            toast.error("Hubo un problema al contactar a la IA")
+            setIsComparingModalOpen(false)
+        } finally {
+            setIsAiAnalyzing(false)
         }
     }
 
@@ -406,6 +448,15 @@ export default function MisPublicacionesPage() {
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <Button
+                                        onClick={handleCompareWithAi}
+                                        variant="outline"
+                                        size="sm"
+                                        className="rounded-lg h-9 border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 hidden sm:flex"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5 mr-2" />
+                                        Comparar (IA)
+                                    </Button>
                                     <Link href={`/empleos/${selectedJob.id}`} target="_blank">
                                         <Button variant="ghost" size="icon" title="Ver publicación">
                                             <Eye className="w-4 h-4 text-slate-500" />
@@ -632,6 +683,84 @@ export default function MisPublicacionesPage() {
                             {isSaving ? "Guardando..." : "Guardar Cambios"}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* AI Compare Modal */}
+            <Dialog open={isComparingModalOpen} onOpenChange={setIsComparingModalOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-purple-900">
+                            <Sparkles className="w-5 h-5 text-purple-600" />
+                            Análisis Competitivo de la Oferta
+                        </DialogTitle>
+                        <DialogDescription>
+                            Compara la atracción de tu vacante contra ofertas similares en el mercado.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-2 min-h-[300px] flex flex-col justify-center">
+                        {isAiAnalyzing ? (
+                            <div className="flex flex-col items-center justify-center text-slate-500 gap-4 py-8">
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
+                                <p className="text-sm">Analizando mercado local y redactando sugerencias...</p>
+                            </div>
+                        ) : aiAnalysisResult ? (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                                    <div>
+                                        <h4 className="font-semibold text-slate-900">Nivel de Competitividad</h4>
+                                        <p className="text-xs text-slate-500">Qué tan atractiva es comparada al resto</p>
+                                    </div>
+                                    <span className={`text-xl font-extrabold px-3 py-1.5 rounded-xl ${aiAnalysisResult.competitivenessScore >= 80 ? 'bg-green-100 text-green-700' : aiAnalysisResult.competitivenessScore >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                                        {aiAnalysisResult.competitivenessScore}%
+                                    </span>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <h5 className="text-sm font-semibold text-slate-800 mb-2">Desempeño de la Descripción</h5>
+                                        <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            {aiAnalysisResult.descriptionFeedback}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <h5 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-2"><DollarSign className="w-3.5 h-3.5" /> Salario</h5>
+                                            <p className="text-sm text-slate-700 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50 h-full">
+                                                {aiAnalysisResult.salaryComparison}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <h5 className="text-xs font-bold text-amber-600 uppercase flex items-center gap-1.5 mb-2"><AlertTriangle className="w-3.5 h-3.5" /> Faltan Beneficios</h5>
+                                            <ul className="text-sm text-slate-700 bg-amber-50/50 p-3 rounded-xl border border-amber-100/50 h-full space-y-2">
+                                                {aiAnalysisResult.missingBenefits?.map((mb: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
+                                                        {mb}
+                                                    </li>
+                                                ))}
+                                                {aiAnalysisResult.missingBenefits?.length === 0 && <li>Ninguno crítico identificado</li>}
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h5 className="text-xs font-bold text-purple-600 uppercase flex items-center gap-1.5 mb-2"><Check className="w-3.5 h-3.5" /> Recomendaciones para mejorar</h5>
+                                        <ul className="text-sm text-slate-600 space-y-2">
+                                            {aiAnalysisResult.improvementTips?.map((tip: string, i: number) => (
+                                                <li key={i} className="flex items-start gap-2">
+                                                    <Check className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                                                    {tip}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ) : null}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

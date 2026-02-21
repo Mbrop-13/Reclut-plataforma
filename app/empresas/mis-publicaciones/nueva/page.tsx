@@ -8,7 +8,7 @@ import {
     ArrowLeft, AlertTriangle, Sparkles, Lock, Crown,
     Briefcase, MapPin, DollarSign, FileText, Settings2, CheckCircle2,
     Image as ImageIcon, X, Upload, Plus, Clock, Layers, Building2,
-    Globe, GripVertical, Eye, EyeOff, Trash2
+    Globe, GripVertical, Eye, EyeOff, Trash2, BrainCircuit, Loader2, Check, RefreshCw
 } from "lucide-react"
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, addDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
@@ -68,7 +68,51 @@ export default function NuevaPublicacionPage() {
     const [minScore, setMinScore] = useState(75)
     const [enableAvatarInterview, setEnableAvatarInterview] = useState(false)
 
+    // AI Assist
+    const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+    const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
+
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const handleAnalyzeMarket = async () => {
+        if (!title.trim() || !description.trim()) {
+            toast.error("Debes completar el título y la descripción para que la IA pueda analizar.")
+            return
+        }
+
+        setIsAiAnalyzing(true)
+        setAiAnalysisResult(null)
+        try {
+            const draftJob = {
+                title, description, requirements, responsibilities,
+                benefits, salaryMin, salaryMax, currency, industry
+            }
+
+            // Fetch a few market jobs to compare
+            let marketJobs: any[] = []
+            if (industry) {
+                const marketQuery = query(collection(db, "jobs"), where("industry", "==", industry))
+                const snapshot = await getDocs(marketQuery)
+                marketJobs = snapshot.docs.map(d => d.data()).filter(j => j.title !== title).slice(0, 4)
+            }
+
+            const res = await fetch('/api/ai/analyze-posting', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ draftJob, marketJobs })
+            })
+
+            if (!res.ok) throw new Error("Error interno IA")
+            const data = await res.json()
+            setAiAnalysisResult(data)
+            toast.success("¡Análisis de mercado completado!")
+        } catch (error) {
+            console.error(error)
+            toast.error("Error al contactar al Copiloto IA")
+        } finally {
+            setIsAiAnalyzing(false)
+        }
+    }
 
     const isFreePlan = !plan || plan === "free"
     const hasReachedFreeLimit = isFreePlan && existingJobCount >= 1
@@ -801,6 +845,117 @@ export default function NuevaPublicacionPage() {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* ============== SECTION 6: Copiloto IA ============== */}
+                {
+                    !isFreePlan && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.28 }}
+                            className="bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-200 p-6 lg:p-8 shadow-sm"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                                        <BrainCircuit className="w-5 h-5 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="font-semibold text-purple-900">Copiloto IA: Asesor de Publicación</h2>
+                                        <p className="text-xs text-purple-600">Compara tu borrador contra el mercado para atraer mejor talento</p>
+                                    </div>
+                                </div>
+
+                                {!aiAnalysisResult && (
+                                    <Button
+                                        type="button"
+                                        onClick={handleAnalyzeMarket}
+                                        disabled={isAiAnalyzing}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-md flex items-center gap-2"
+                                    >
+                                        {isAiAnalyzing ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Analizando mercado...</>
+                                        ) : (
+                                            <><Sparkles className="w-4 h-4" /> Mejorar mi publicación</>
+                                        )}
+                                    </Button>
+                                )}
+                            </div>
+
+                            <AnimatePresence>
+                                {aiAnalysisResult && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        className="bg-white rounded-xl p-5 border border-purple-100 shadow-sm"
+                                    >
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="text-sm font-bold text-slate-700">Atractivo vs Mercado</h4>
+                                                    <span className={`text-sm font-extrabold px-3 py-1 rounded-lg ${aiAnalysisResult.competitivenessScore >= 80 ? 'bg-green-100 text-green-700' : aiAnalysisResult.competitivenessScore >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {aiAnalysisResult.competitivenessScore}%
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                                                    {aiAnalysisResult.descriptionFeedback}
+                                                </p>
+
+                                                <h5 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-2"><DollarSign className="w-3.5 h-3.5" /> Análisis Salarial</h5>
+                                                <p className="text-xs text-slate-700 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                    {aiAnalysisResult.salaryComparison}
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {aiAnalysisResult.missingBenefits?.length > 0 && (
+                                                    <div>
+                                                        <h5 className="text-xs font-bold text-amber-600 uppercase flex items-center gap-1.5 mb-2"><AlertTriangle className="w-3.5 h-3.5" /> Beneficios Faltantes Comunes</h5>
+                                                        <ul className="text-xs text-slate-600 space-y-1.5">
+                                                            {aiAnalysisResult.missingBenefits.map((mb: string, i: number) => (
+                                                                <li key={i} className="flex items-start gap-1.5">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 flex-shrink-0" />
+                                                                    {mb}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+
+                                                {aiAnalysisResult.improvementTips?.length > 0 && (
+                                                    <div>
+                                                        <h5 className="text-xs font-bold text-purple-600 uppercase flex items-center gap-1.5 mb-2"><Sparkles className="w-3.5 h-3.5" /> Sugerencias de Mejora</h5>
+                                                        <ul className="text-xs text-slate-600 space-y-1.5">
+                                                            {aiAnalysisResult.improvementTips.map((tip: string, i: number) => (
+                                                                <li key={i} className="flex items-start gap-1.5">
+                                                                    <Check className="w-3.5 h-3.5 text-purple-500 flex-shrink-0 mt-[-2px]" />
+                                                                    {tip}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={handleAnalyzeMarket}
+                                                disabled={isAiAnalyzing}
+                                                className="text-xs h-8 px-3 rounded-lg border-purple-200 text-purple-600 hover:bg-purple-50"
+                                            >
+                                                <RefreshCw className="w-3 h-3 mr-1.5" />
+                                                Re-analizar
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>
+                    )
+                }
 
                 {/* ============== Submit ============== */}
                 <motion.div
