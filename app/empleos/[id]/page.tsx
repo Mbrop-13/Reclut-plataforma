@@ -345,10 +345,28 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                             </div>
                             <div className="flex-shrink-0 mt-2 md:mt-0">
                                 {isCompanyUser ? (
-                                    <div className="text-center px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
-                                        <p className="text-sm text-slate-500 font-medium">Vista de empresa</p>
-                                        <p className="text-xs text-slate-400 mt-0.5">Las cuentas de empresa no pueden postularse</p>
-                                    </div>
+                                    (currentUser?.uid && job.companyId === currentUser.uid) ? (
+                                        <div className="text-center">
+                                            <Button
+                                                onClick={() => router.push(`/empresas/mis-publicaciones/nueva?edit=${job.id}`)}
+                                                className="h-12 px-8 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-[1.02] transition-all w-full md:w-auto text-white flex items-center justify-center gap-2"
+                                            >
+                                                Editar Publicación
+                                            </Button>
+                                            <p className="text-xs text-slate-400 mt-2">Esta es tu publicación</p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <Button
+                                                variant="outline"
+                                                className="h-12 px-8 rounded-xl text-base font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all w-full md:w-auto flex items-center justify-center gap-2"
+                                                onClick={() => toast.info("La función de comparar estará disponible pronto")}
+                                            >
+                                                Comparar
+                                            </Button>
+                                            <p className="text-xs text-slate-400 mt-2">Vista de otra empresa</p>
+                                        </div>
+                                    )
                                 ) : (
                                     <>
                                         <Button
@@ -519,9 +537,26 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                             {/* Second CTA */}
                             <div className="mt-6 pt-5 border-t border-slate-100">
                                 {isCompanyUser ? (
-                                    <div className="text-center py-2">
-                                        <p className="text-xs text-slate-400">Las cuentas de empresa no pueden postularse</p>
-                                    </div>
+                                    (currentUser?.uid && job.companyId === currentUser.uid) ? (
+                                        <div className="text-center py-2">
+                                            <Button
+                                                onClick={() => router.push(`/empresas/mis-publicaciones/nueva?edit=${job.id}`)}
+                                                className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 transition-all text-white flex items-center justify-center gap-2"
+                                            >
+                                                Editar Publicación
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-2">
+                                            <Button
+                                                variant="outline"
+                                                className="w-full h-12 rounded-xl text-base font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                                                onClick={() => toast.info("La función de comparar estará disponible pronto")}
+                                            >
+                                                Comparar Publicación
+                                            </Button>
+                                        </div>
+                                    )
                                 ) : (
                                     <Button
                                         className={`w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 transition-all ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
