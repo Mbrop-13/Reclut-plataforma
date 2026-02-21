@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-export const maxDuration = 60;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // Ensure this is set in .env
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const SITE_NAME = 'Reclu';
@@ -201,7 +200,7 @@ Justificación: [Explicación detallada]
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": "qwen/qwen3-235b-a22b-thinking-2507",
+                "model": "qwen/qwen-2.5-72b-instruct",
                 "messages": [
                     { "role": "system", "content": "Eres un asistente de reclutamiento experto. Responde siempre en JSON válido." },
                     { "role": "user", "content": SCORING_PROMPT }

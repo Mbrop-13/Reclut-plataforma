@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const maxDuration = 60; // Max allowed for Vercel Hobby plan
 export async function POST(req: Request) {
     try {
         const { userProfile, jobDescription } = await req.json()
@@ -42,7 +41,7 @@ Por favor, analiza la compatibilidad del candidato con la oferta. Devuelve tu re
                 'X-Title': 'Reclut Platform',
             },
             body: JSON.stringify({
-                model: 'qwen/qwen3-235b-a22b-thinking-2507', // Requested by user
+                model: 'qwen/qwen-2.5-72b-instruct',
                 messages: [
                     { role: 'system', content: 'You are a helpful HR assistant that output strictly JSON.' },
                     { role: 'user', content: prompt }

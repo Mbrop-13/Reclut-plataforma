@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const maxDuration = 60; // Max allowed for Vercel Hobby plan
 export async function POST(req: Request) {
     try {
         const { draftJob, marketJobs } = await req.json()
@@ -44,7 +43,7 @@ Devuelve EXACTAMENTE un objeto JSON con esta estructura (sin bloques markdown \`
                 'X-Title': 'Reclut Platform',
             },
             body: JSON.stringify({
-                model: 'qwen/qwen3-235b-a22b-thinking-2507',
+                model: 'qwen/qwen-2.5-72b-instruct',
                 messages: [
                     { role: 'system', content: 'You are an HR Market Analyst that output strictly JSON.' },
                     { role: 'user', content: prompt }
