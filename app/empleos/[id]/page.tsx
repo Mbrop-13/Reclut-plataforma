@@ -35,6 +35,7 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
     const [aiScore, setAiScore] = useState<number | null>(null)
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
     const [isLimitReached, setIsLimitReached] = useState(false)
+    const [hasApplied, setHasApplied] = useState(false)
 
     // OpenRouter AI Analysis State
     const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
@@ -109,6 +110,28 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
         return () => unsubscribe()
     }, [params.id])
 
+    // Check if user has already applied
+    useEffect(() => {
+        const checkApplicationStatus = async () => {
+            if (currentUser && job && !isCompanyUser) {
+                try {
+                    const q = query(
+                        collection(db, "applications"),
+                        where("jobId", "==", job.id),
+                        where("candidateId", "==", currentUser.uid)
+                    )
+                    const snapshot = await getDocs(q)
+                    if (!snapshot.empty) {
+                        setHasApplied(true)
+                    }
+                } catch (error) {
+                    console.error("Error checking application status:", error)
+                }
+            }
+        }
+        checkApplicationStatus()
+    }, [currentUser, job, isCompanyUser])
+
 
     const isCompanyUser = !!(userProfile?.role === 'RECRUITER' || userProfile?.companyName || userProfile?.userType === 'company')
 
@@ -161,6 +184,11 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
         if (!currentUser) {
             toast.error("Debes iniciar sesión para postularte")
             router.push("/login")
+            return
+        }
+
+        if (hasApplied) {
+            toast.error("Ya te has postulado a esta vacante")
             return
         }
 
@@ -419,14 +447,14 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
                                 ) : (
                                     <>
                                         <Button
-                                            className={`h-12 px-8 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-[1.02] transition-all w-full md:w-auto ${isLimitReached ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`h-12 px-8 rounded-xl text-base font-semibold shadow-lg shadow-blue-500/20 bg-[#1890ff] hover:bg-blue-600 hover:scale-[1.02] transition-all w-full md:w-auto ${(isLimitReached || hasApplied) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             onClick={handleApplyClick}
-                                            disabled={isLimitReached}
+                                            disabled={isLimitReached || hasApplied}
                                         >
-                                            {isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
+                                            {hasApplied ? 'Ya Postulado' : isLimitReached ? 'Vacante Completa' : 'Postular Ahora'}
                                         </Button>
                                         <p className="text-xs text-center text-slate-400 mt-1.5">
-                                            {isLimitReached ? 'Límite de postulantes alcanzado' : 'Aplica en 2 minutos'}
+                                            {hasApplied ? 'Ya has enviado tu postulación' : isLimitReached ? 'Límite de postulantes alcanzado' : 'Aplica en 2 minutos'}
                                         </p>
                                     </>
                                 )}
