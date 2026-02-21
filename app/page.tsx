@@ -8,7 +8,7 @@ import { MainHeader } from "@/components/layout/main-header"
 import { Input } from "@/components/ui/input"
 import {
     Search, MapPin, Filter, X, ChevronDown, Briefcase, Clock, Building2,
-    DollarSign, SlidersHorizontal, Sparkles, Globe, Layers, Users, Heart, MessageSquare, Bot, Check, Menu
+    DollarSign, SlidersHorizontal, Sparkles, Globe, Layers, Users, Heart, MessageSquare, Bot, Check
 } from "lucide-react"
 import { EMPLEOS } from "@/lib/mock-data"
 import { collection, getDocs, query, where, getDoc, doc } from "firebase/firestore"
@@ -24,7 +24,7 @@ const FILTROS = {
         label: "Tipo de contrato", icon: Clock, options: ["Tiempo Completo", "Medio Tiempo", "Freelance", "Pasantía", "Por Proyecto"]
     },
     experiencia: {
-        label: "Nivel de Experiencia", icon: Layers, options: ["Sin experiencia", "1-2 años", "3-5 años", "5+ años", "10+ años"]
+        label: "Experiencia", icon: Layers, options: ["Sin experiencia", "1-2 años", "3-5 años", "5+ años", "10+ años"]
     },
     salario: {
         label: "Rango Salarial", icon: DollarSign, options: ["Hasta $30,000", "$30,000 - $60,000", "$60,000 - $100,000", "$100,000+", "En USD"]
@@ -41,7 +41,7 @@ const FILTROS = {
         ]
     },
     tamano: {
-        label: "Tamaño de Empresa", icon: Users, options: ["Startup (1-50)", "Pyme (51-200)", "Corporativo (200+)"]
+        label: "Tamaño Empresa", icon: Users, options: ["Startup (1-50)", "Pyme (51-200)", "Corporativo (200+)"]
     },
     idioma: {
         label: "Idiomas Requeridos", icon: MessageSquare, options: ["Inglés Nativo", "Inglés Avanzado", "Inglés Intermedio", "Solo Español"]
@@ -50,7 +50,7 @@ const FILTROS = {
         label: "Beneficios Clave", icon: Heart, options: ["Seguro Médico", "Horario Flexible", "Trabajo Remoto 100%", "4 Días Laborales", "Bono de Desempeño", "Stock Options"]
     },
     plataforma: {
-        label: "Características Extra", icon: Bot, options: ["Entrevista con IA", "Alta Compatibilidad (>80%)"]
+        label: "Plataforma", icon: Bot, options: ["Entrevista con IA", "Alta Compatibilidad (>80%)"]
     }
 }
 
@@ -59,8 +59,8 @@ type FilterKey = keyof typeof FILTROS
 export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [locationQuery, setLocationQuery] = useState("")
+    const [showFilters, setShowFilters] = useState(false)
     const [industrySearchQuery, setIndustrySearchQuery] = useState("")
-    const [showMobileFilters, setShowMobileFilters] = useState(false)
     const [activeFilters, setActiveFilters] = useState<Record<FilterKey, string[]>>({
         modalidad: [], tipo: [], experiencia: [], salario: [], industria: [], tamano: [], idioma: [], beneficios: [], plataforma: []
     })
@@ -115,8 +115,8 @@ export default function HomePage() {
                         planType: d.planType,
                         maxApplicants: d.maxApplicants,
                         enableAvatarInterview: d.enableAvatarInterview,
-                        tamanoEmpresa: d.companySize || "Pyme (51-200)", // Mock if not present
-                        idiomas: d.languages || ["Solo Español"] // Mock if not present
+                        tamanoEmpresa: d.companySize || "Pyme (51-200)",
+                        idiomas: d.languages || ["Solo Español"]
                     }
                 })
                 setFirestoreJobs(jobs)
@@ -187,6 +187,10 @@ export default function HomePage() {
 
             return {
                 ...job,
+                matchScore,
+                popularityScore,
+                recencyScore,
+                qualityScore,
                 totalScore: Math.round(score)
             }
         })
@@ -249,7 +253,7 @@ export default function HomePage() {
 
             // Simple string matching filters
             if (activeFilters.modalidad.length > 0 && !activeFilters.modalidad.includes(job.modalidad)) return false
-            if (activeFilters.experiencia.length > 0 && !activeFilters.experiencia.includes(job.experienceLevel)) return false // Job Mock structure varies, assuming partial matching for demo
+            if (activeFilters.experiencia.length > 0 && !activeFilters.experiencia.includes(job.experienceLevel)) return false
 
             // Salary filter
             if (activeFilters.salario.length > 0) {
@@ -285,10 +289,10 @@ export default function HomePage() {
                 if (!matchesBenefits) return false
             }
 
-            // Languages and Size generally would map directly. For this demo we rely on flexible text matching to mock filtering since data varies.
+            // Languages
             if (activeFilters.idioma.length > 0) {
                 const jobText = `${job.descripcion} ${job.idiomas?.join(' ') || ""}`.toLowerCase()
-                const matchesLang = activeFilters.idioma.some(lang => jobText.includes(lang.split(' ')[1]?.toLowerCase() || 'español')) // Simplification
+                const matchesLang = activeFilters.idioma.some(lang => jobText.includes(lang.split(' ')[1]?.toLowerCase() || 'español'))
                 if (!matchesLang) return false
             }
 
@@ -296,350 +300,360 @@ export default function HomePage() {
         })
     }, [allJobs, searchQuery, locationQuery, activeFilters])
 
-    // RENDER FILTER OPTIONS (Reusable for Desktop Sidebar & Mobile Drawer)
-    const renderFilterCategories = () => (
-        <div className="space-y-8">
-            {(Object.entries(FILTROS) as [FilterKey, typeof FILTROS[FilterKey]][]).map(([key, config]) => {
-                const Icon = config.icon
-
-                // For Industry, we apply the local search filter and limit height
-                let displayedOptions = config.options
-                if (key === 'industria' && industrySearchQuery) {
-                    displayedOptions = config.options.filter(opt =>
-                        opt.toLowerCase().includes(industrySearchQuery.toLowerCase())
-                    )
-                }
-
-                // Make Industry scrollable if there are many options
-                const maxHClass = key === 'industria' ? 'max-h-[250px] overflow-y-auto pr-2 custom-scrollbar' : ''
-
-                return (
-                    <div key={key}>
-                        <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
-                                <Icon className="w-4 h-4 text-slate-600" />
-                            </div>
-                            {config.label}
-                        </h4>
-
-                        {key === 'industria' && (
-                            <div className="relative mb-3">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Buscar industria..."
-                                    value={industrySearchQuery}
-                                    onChange={(e) => setIndustrySearchQuery(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-[#1890ff] focus:ring-1 focus:ring-[#1890ff] placeholder:text-slate-400"
-                                />
-                            </div>
-                        )}
-
-                        <div className={`space-y-2 ${maxHClass}`}>
-                            {displayedOptions.length === 0 && key === 'industria' && (
-                                <p className="text-xs text-slate-500 italic">No hay industrias que coincidan.</p>
-                            )}
-                            {displayedOptions.map((option) => {
-                                const isActive = activeFilters[key].includes(option)
-                                return (
-                                    <label key={option} className="flex items-start gap-3 cursor-pointer group">
-                                        <div className={`mt-0.5 w-4 h-4 rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-colors ${isActive ? 'bg-[#1890ff] border-[#1890ff]' : 'border-slate-300 group-hover:border-[#1890ff]'}`}>
-                                            {isActive && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-                                        </div>
-                                        <span className={`text-[13px] sm:text-sm transition-colors ${isActive ? 'text-slate-900 font-medium' : 'text-slate-600 group-hover:text-slate-900'}`}>
-                                            {option}
-                                        </span>
-                                    </label>
-                                )
-                            })}
-                        </div>
-                    </div>
-                )
-            })}
-        </div>
-    )
-
     return (
         <div className="min-h-screen bg-slate-50">
             <MainHeader />
 
-            {/* Global Sticky Search Bar (Desktop) */}
-            <div className="sticky top-[72px] z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm hidden md:block">
-                <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-3 flex gap-3">
-                    <div className="relative flex-1 max-w-2xl">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            placeholder="Cargo, empresa, tecnología o palabra clave..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-11 h-11 bg-slate-50/50 border-slate-200 rounded-xl text-slate-900 focus-visible:ring-[#1890ff]"
-                        />
-                    </div>
-                    <div className="relative w-72">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
-                        <LocationInput
-                            placeholder="Ubicación..."
-                            value={locationQuery}
-                            onChange={setLocationQuery}
-                            className="w-full pl-11 h-11 bg-slate-50/50 border-slate-200 rounded-xl shadow-none"
-                        />
-                    </div>
-                    <Button className="h-11 px-8 rounded-xl bg-[#1890ff] hover:bg-blue-600 text-white font-semibold">
-                        Buscar
-                    </Button>
-                </div>
-            </div>
-
-            {/* Hero Search Section (Mobile Focus or First Impression) */}
-            <section className="relative bg-white overflow-hidden border-b border-slate-100 md:hidden">
+            {/* Hero Search Section */}
+            <section className="relative bg-white overflow-hidden border-b border-slate-100">
                 <div className="absolute top-0 left-1/3 w-[700px] h-[500px] rounded-full bg-[#1890ff]/[0.04] blur-[120px]" />
-                <div className="relative z-10 px-6 py-12 pb-14">
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
-                        Encuentra tu próximo <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1890ff] to-indigo-500">desafío profesional</span>
-                    </h1>
+                <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-indigo-500/[0.03] blur-[100px]" />
 
-                    <div className="mt-6 flex flex-col gap-3">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                            <Input
-                                placeholder="Cargo o empresa..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 h-12 bg-slate-50 border-slate-200 rounded-xl"
-                            />
-                        </div>
-                        <div className="relative">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
-                            <LocationInput
-                                placeholder="Ubicación..."
-                                value={locationQuery}
-                                onChange={setLocationQuery}
-                                className="w-full pl-12 h-12 bg-slate-50 border-slate-200 rounded-xl shadow-none"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section>
+                <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-16 pb-20">
+                    <motion.h1
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight mb-4"
+                    >
+                        Encuentra tu próximo{" "}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1890ff] to-indigo-500">
+                            desafío profesional
+                        </span>
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 }}
+                        className="text-slate-500 mb-10 max-w-xl mx-auto"
+                    >
+                        Explora oportunidades en las empresas más innovadoras de LATAM
+                    </motion.p>
 
-            {/* Main Layout (2 Columns: Sidebar + Grid) */}
-            <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
-                <div className="flex flex-col lg:flex-row gap-8">
-
-                    {/* Desktop Sidebar Filters */}
-                    <aside className="hidden lg:block w-[280px] xl:w-[320px] flex-shrink-0">
-                        <div className="sticky top-[150px] bg-white rounded-2xl border border-slate-200 p-6 shadow-sm max-h-[calc(100vh-170px)] overflow-y-auto overflow-x-hidden custom-scrollbar">
-                            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                                <h3 className="font-bold text-slate-900 flex items-center gap-2 text-lg">
-                                    <Filter className="w-5 h-5 text-[#1890ff]" />
-                                    Filtros Avanzados
-                                </h3>
-                                {totalActiveFilters > 0 && (
-                                    <button onClick={clearAllFilters} className="text-xs font-bold text-[#1890ff] hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md transition-colors">
-                                        Limpiar ({totalActiveFilters})
-                                    </button>
-                                )}
-                            </div>
-
-                            {renderFilterCategories()}
-                        </div>
-                    </aside>
-
-                    {/* Mobile Filters Drawer */}
-                    <AnimatePresence>
-                        {showMobileFilters && (
-                            <>
-                                <motion.div
-                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                    onClick={() => setShowMobileFilters(false)}
-                                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 lg:hidden"
+                    {/* Search Bar */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="max-w-3xl mx-auto"
+                    >
+                        <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Input
+                                    placeholder="Cargo, empresa o habilidad..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-12 h-13 bg-slate-50 border-none rounded-xl text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-[#1890ff] text-base"
                                 />
-                                <motion.div
-                                    initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-                                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                    className="fixed inset-y-0 right-0 w-full sm:w-[400px] bg-white z-50 shadow-2xl flex flex-col lg:hidden"
-                                >
-                                    <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white">
-                                        <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                                            <Filter className="w-5 h-5 text-[#1890ff]" />
-                                            Filtros de Búsqueda
-                                        </h3>
-                                        <button onClick={() => setShowMobileFilters(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                                            <X className="w-5 h-5 text-slate-500" />
-                                        </button>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
-                                        {renderFilterCategories()}
-                                    </div>
-                                    <div className="p-4 border-t border-slate-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-                                        <div className="flex gap-3">
-                                            {totalActiveFilters > 0 && (
-                                                <Button variant="outline" onClick={clearAllFilters} className="flex-1 border-slate-200">
-                                                    Limpiar
-                                                </Button>
-                                            )}
-                                            <Button onClick={() => setShowMobileFilters(false)} className={`bg-[#1890ff] hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20 ${totalActiveFilters > 0 ? 'flex-1' : 'w-full'}`}>
-                                                Ver {filteredJobs.length} Resultados
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Right Content: Feed */}
-                    <div className="flex-1 min-w-0">
-                        {/* Feed Controls Header */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                            <div>
-                                <h2 className="text-xl md:text-2xl font-bold text-slate-900">Oportunidades Destacadas</h2>
-                                <p className="text-sm text-slate-500 mt-1">
-                                    Mostrando <span className="font-semibold text-slate-700">{filteredJobs.length}</span> empleos reales y remotos
-                                </p>
                             </div>
-
-                            {/* Mobile trigger for filters */}
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowMobileFilters(true)}
-                                className="lg:hidden w-full sm:w-auto flex items-center justify-center gap-2 h-11 rounded-xl border-slate-200 bg-white"
-                            >
-                                <Menu className="w-4 h-4 text-slate-600" />
-                                Filtros {totalActiveFilters > 0 && <span className="bg-[#1890ff] text-white w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold leading-none">{totalActiveFilters}</span>}
+                            <div className="relative flex-1 sm:border-l border-slate-200 sm:pl-3">
+                                <MapPin className="absolute left-4 sm:left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
+                                <LocationInput
+                                    placeholder="Ciudad, región o comuna..."
+                                    value={locationQuery}
+                                    onChange={setLocationQuery}
+                                    className="w-full pl-12 sm:pl-14 h-13 bg-slate-50 border-none rounded-xl text-slate-900 shadow-none hover:bg-slate-100/80 text-base"
+                                />
+                            </div>
+                            <Button className="h-13 px-8 rounded-xl bg-[#1890ff] hover:bg-blue-600 text-white font-semibold text-base shadow-lg shadow-blue-500/25 whitespace-nowrap">
+                                Buscar
                             </Button>
                         </div>
 
-                        {/* Active Filter Chips */}
-                        {totalActiveFilters > 0 && (
-                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-wrap gap-2 mb-6 p-4 bg-white rounded-xl border border-blue-100 shadow-sm shadow-blue-500/5">
-                                <span className="text-sm font-semibold text-slate-700 flex items-center mr-2">Filtros Activos:</span>
-                                {(Object.entries(activeFilters) as [FilterKey, string[]][]).map(([category, values]) =>
-                                    values.map(value => (
-                                        <button
-                                            key={`${category}-${value}`}
-                                            onClick={() => toggleFilter(category, value)}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-[#1890ff] text-[13px] font-medium border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-colors"
-                                        >
-                                            {value}
-                                            <X className="w-3.5 h-3.5" />
-                                        </button>
-                                    ))
-                                )}
-                            </motion.div>
-                        )}
-
-                        {/* Job Cards Grid */}
-                        <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-                            <AnimatePresence mode="popLayout">
-                                {filteredJobs.map((empleo, index) => (
-                                    <motion.div
-                                        key={empleo.id}
-                                        layout
-                                        initial={{ opacity: 0, y: 16 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.95 }}
-                                        transition={{ delay: index * 0.02 }}
+                        {/* Quick filters chips */}
+                        <div className="flex flex-wrap justify-center gap-2 mt-5">
+                            {["Remoto", "Tecnología", "Diseño", "Marketing", "En USD"].map(chip => {
+                                const isActive = searchQuery === chip
+                                return (
+                                    <button
+                                        key={chip}
+                                        onClick={() => setSearchQuery(isActive ? "" : chip)}
+                                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${isActive
+                                            ? "bg-[#1890ff] text-white shadow-md shadow-blue-500/25"
+                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800"}`}
                                     >
-                                        <Link href={`/empleos/${empleo.id}`}>
-                                            <div className="group h-full bg-white rounded-2xl border border-slate-200 hover:border-[#1890ff]/40 hover:shadow-xl hover:shadow-blue-500/[0.08] transition-all duration-300 overflow-hidden flex flex-col">
-                                                {/* Image */}
-                                                <div className="relative h-36 overflow-hidden bg-slate-100">
-                                                    <img
-                                                        src={empleo.imagen}
-                                                        alt={empleo.empresa}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                                                    <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
-                                                        <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/95 backdrop-blur-md text-slate-700 shadow-sm">
-                                                            {empleo.modalidad}
-                                                        </span>
-                                                        {userProfile && (
-                                                            <span className="px-2 py-1 rounded-lg text-[11px] font-bold bg-green-500/90 backdrop-blur-md text-white shadow-sm flex items-center gap-1.5 border border-green-400/20">
-                                                                <Sparkles className="w-3 h-3" />
-                                                                {empleo.totalScore}% Match
-                                                            </span>
-                                                        )}
-                                                        {empleo.planType === "free" && !userProfile && (
-                                                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-400/95 backdrop-blur-md text-amber-900 shadow-sm">
-                                                                GRATUITO
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Body */}
-                                                <div className="p-5 pt-10 relative flex-1 flex flex-col">
-                                                    {/* Logo */}
-                                                    <div className="absolute -top-7 left-5">
-                                                        <div className="w-14 h-14 rounded-xl bg-white p-1 shadow-md border border-slate-100 group-hover:-translate-y-1 transition-transform">
-                                                            <img src={empleo.logo} alt={empleo.empresa} className="w-full h-full object-contain rounded-lg" />
-                                                        </div>
-                                                    </div>
-
-                                                    <h3 className="font-bold text-slate-900 group-hover:text-[#1890ff] transition-colors line-clamp-1 mb-1 text-base">
-                                                        {empleo.titulo}
-                                                    </h3>
-                                                    <p className="text-[13px] text-slate-500 flex items-center gap-1.5 mb-3">
-                                                        <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                                                        {empleo.empresa}
-                                                        <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                                        {empleo.ubicacion}
-                                                    </p>
-
-                                                    <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-4 flex-1">
-                                                        {empleo.descripcion}
-                                                    </p>
-
-                                                    <div className="flex flex-wrap gap-1.5 mb-4">
-                                                        {empleo.tags?.slice(0, 3).map((tag: string) => (
-                                                            <span key={tag} className="px-2 py-1 bg-slate-50 text-slate-600 text-[11px] font-medium rounded-md border border-slate-100 group-hover:border-blue-100 group-hover:bg-blue-50 group-hover:text-[#1890ff] transition-colors">
-                                                                {tag}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
-                                                        <span className="text-[15px] font-bold text-slate-800">{empleo.salario}</span>
-                                                        <span className="text-sm font-semibold text-[#1890ff] group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-                                                            Postular →
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
+                                        {chip}
+                                    </button>
+                                )
+                            })}
                         </div>
+                    </motion.div>
+                </div>
+            </section>
 
-                        {filteredJobs.length === 0 && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-24 bg-white rounded-2xl border border-slate-200 border-dashed">
-                                <div className="w-20 h-20 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-5 border border-slate-100">
-                                    <Search className="w-8 h-8 text-slate-300" />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-800 mb-2">No se encontraron resultados</h3>
-                                <p className="text-slate-500 mb-6 max-w-sm mx-auto text-sm">
-                                    Intenta ajustar los filtros (tienes {totalActiveFilters} activos) o busca términos más generales.
-                                </p>
-                                <Button
-                                    onClick={clearAllFilters}
-                                    className="rounded-xl px-6 bg-slate-900 hover:bg-slate-800 text-white shadow-lg"
-                                >
-                                    Limpiar todos los filtros
-                                </Button>
-                            </motion.div>
+            {/* Main Content */}
+            <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8 pb-20">
+                {/* Controls Bar */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900">Oportunidades Destacadas</h2>
+                        <p className="text-sm text-slate-500 mt-0.5">
+                            <span className="font-semibold text-slate-700">{filteredJobs.length}</span> vacantes encontradas
+                            {totalActiveFilters > 0 && (
+                                <span className="ml-2 text-[#1890ff]">
+                                    ({totalActiveFilters} filtro{totalActiveFilters > 1 ? 's' : ''} activo{totalActiveFilters > 1 ? 's' : ''})
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {totalActiveFilters > 0 && (
+                            <Button
+                                variant="ghost"
+                                onClick={clearAllFilters}
+                                className="text-sm text-slate-500 hover:text-red-500 gap-1"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                                Limpiar filtros
+                            </Button>
                         )}
-
-                        {filteredJobs.length > 0 && (
-                            <div className="mt-12 text-center pb-8 p-1">
-                                <Button variant="outline" className="rounded-xl px-8 h-12 border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold shadow-sm transition-all">
-                                    Cargar más oportunidades
-                                </Button>
-                            </div>
-                        )}
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`rounded-xl px-5 gap-2 border-slate-200 hover:bg-white ${showFilters ? 'bg-[#1890ff] text-white hover:bg-blue-600 border-[#1890ff] hover:text-white' : ''}`}
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            Filtros
+                            {totalActiveFilters > 0 && (
+                                <span className={`w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold ${showFilters ? 'bg-white text-[#1890ff]' : 'bg-[#1890ff] text-white'}`}>
+                                    {totalActiveFilters}
+                                </span>
+                            )}
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                        </Button>
                     </div>
                 </div>
+
+                {/* Active Filter Chips */}
+                {totalActiveFilters > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-wrap gap-2 mb-6"
+                    >
+                        {(Object.entries(activeFilters) as [FilterKey, string[]][]).map(([category, values]) =>
+                            values.map(value => (
+                                <button
+                                    key={`${category}-${value}`}
+                                    onClick={() => toggleFilter(category, value)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-[#1890ff] text-sm font-medium border border-blue-100 hover:bg-blue-100 transition-colors"
+                                >
+                                    {value}
+                                    <X className="w-3 h-3" />
+                                </button>
+                            ))
+                        )}
+                    </motion.div>
+                )}
+
+                {/* Filters Panel (Dropdown Style) */}
+                <AnimatePresence>
+                    {showFilters && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mb-8 overflow-hidden"
+                        >
+                            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                                        <Filter className="w-4 h-4 text-[#1890ff]" />
+                                        Filtrar resultados
+                                    </h3>
+                                    <button onClick={() => setShowFilters(false)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {(Object.entries(FILTROS) as [FilterKey, typeof FILTROS[FilterKey]][]).map(([key, config]) => {
+                                        const Icon = config.icon
+
+                                        let displayedOptions = config.options
+                                        if (key === 'industria' && industrySearchQuery) {
+                                            displayedOptions = config.options.filter(opt =>
+                                                opt.toLowerCase().includes(industrySearchQuery.toLowerCase())
+                                            )
+                                        }
+
+                                        const maxHClass = key === 'industria' ? 'max-h-[200px] overflow-y-auto pr-1 custom-scrollbar' : 'max-h-[220px] overflow-y-auto pr-1 custom-scrollbar'
+
+                                        return (
+                                            <div key={key}>
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                                    <Icon className="w-3.5 h-3.5" />
+                                                    {config.label}
+                                                </h4>
+
+                                                {key === 'industria' && (
+                                                    <div className="relative mb-3">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Buscar industria..."
+                                                            value={industrySearchQuery}
+                                                            onChange={(e) => setIndustrySearchQuery(e.target.value)}
+                                                            className="w-full pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-[#1890ff] focus:ring-1 focus:ring-[#1890ff] placeholder:text-slate-400"
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                <div className={`space-y-1.5 ${maxHClass}`}>
+                                                    {displayedOptions.length === 0 && key === 'industria' && (
+                                                        <p className="text-xs text-slate-500 text-center py-2">Sin coincidencias.</p>
+                                                    )}
+                                                    {displayedOptions.map((option) => {
+                                                        const isActive = activeFilters[key].includes(option)
+                                                        return (
+                                                            <button
+                                                                key={option}
+                                                                onClick={() => toggleFilter(key, option)}
+                                                                className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-all flex items-center gap-2 ${isActive
+                                                                    ? 'bg-[#1890ff] text-white font-medium shadow-sm'
+                                                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent hover:border-slate-100'
+                                                                    }`}
+                                                            >
+                                                                <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${isActive ? 'bg-white text-[#1890ff]' : 'border border-slate-300 group-hover:border-[#1890ff]'}`}>
+                                                                    {isActive && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
+                                                                </div>
+                                                                <span className="truncate">{option}</span>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-slate-100">
+                                    <span className="text-sm text-slate-500">
+                                        {totalActiveFilters} filtro{totalActiveFilters !== 1 ? 's' : ''} seleccionado{totalActiveFilters !== 1 ? 's' : ''}
+                                    </span>
+                                    <div className="flex gap-3">
+                                        <Button variant="ghost" onClick={clearAllFilters} className="text-slate-500">
+                                            Limpiar todo
+                                        </Button>
+                                        <Button onClick={() => setShowFilters(false)} className="bg-[#1890ff] hover:bg-blue-600 text-white rounded-xl px-6">
+                                            Ver {filteredJobs.length} resultados
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Job Cards Grid */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <AnimatePresence mode="popLayout">
+                        {filteredJobs.map((empleo, index) => (
+                            <motion.div
+                                key={empleo.id}
+                                layout
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ delay: index * 0.03 }}
+                            >
+                                <Link href={`/empleos/${empleo.id}`}>
+                                    <div className="group h-full bg-white rounded-2xl border border-slate-200 hover:border-[#1890ff]/30 hover:shadow-xl hover:shadow-blue-500/[0.06] transition-all duration-300 overflow-hidden flex flex-col">
+                                        {/* Image */}
+                                        <div className="relative h-36 overflow-hidden bg-slate-100">
+                                            <img
+                                                src={empleo.imagen}
+                                                alt={empleo.empresa}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                            <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+                                                <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/90 backdrop-blur-sm text-slate-700 shadow-sm">
+                                                    {empleo.modalidad}
+                                                </span>
+                                                {userProfile && (
+                                                    <span className="px-2 py-1 rounded-lg text-xs font-bold bg-green-500/90 backdrop-blur-sm text-white shadow-sm flex items-center gap-1">
+                                                        <Sparkles className="w-3 h-3" />
+                                                        {empleo.totalScore}% Match
+                                                    </span>
+                                                )}
+                                                {empleo.planType === "free" && !userProfile && (
+                                                    <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-amber-400/90 backdrop-blur-sm text-amber-900 shadow-sm">
+                                                        GRATUITO
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Body */}
+                                        <div className="p-5 pt-10 relative flex-1 flex flex-col">
+                                            {/* Logo */}
+                                            <div className="absolute -top-7 left-5">
+                                                <div className="w-14 h-14 rounded-xl bg-white p-1 shadow-lg border border-slate-100 group-hover:scale-105 transition-transform">
+                                                    <img src={empleo.logo} alt={empleo.empresa} className="w-full h-full object-contain rounded-lg" />
+                                                </div>
+                                            </div>
+
+                                            <h3 className="font-bold text-slate-900 group-hover:text-[#1890ff] transition-colors line-clamp-1 mb-1">
+                                                {empleo.titulo}
+                                            </h3>
+                                            <p className="text-sm text-slate-500 flex items-center gap-1.5 mb-3">
+                                                <Building2 className="w-3.5 h-3.5" />
+                                                {empleo.empresa}
+                                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                {empleo.ubicacion}
+                                            </p>
+
+                                            <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-4 flex-1">
+                                                {empleo.descripcion}
+                                            </p>
+
+                                            <div className="flex flex-wrap gap-1.5 mb-4">
+                                                {empleo.tags?.slice(0, 3).map((tag: string) => (
+                                                    <span key={tag} className="px-2 py-0.5 bg-slate-50 text-slate-500 text-xs rounded-md border border-slate-100 group-hover:border-blue-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                                <span className="text-sm font-semibold text-slate-800">{empleo.salario}</span>
+                                                <span className="text-xs font-semibold text-[#1890ff] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                                                    Ver más →
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
+
+                {filteredJobs.length > 0 && (
+                    <div className="mt-12 text-center">
+                        <Button variant="outline" className="rounded-xl px-8 py-5 h-auto border-slate-200 hover:bg-white text-slate-600 font-medium">
+                            Cargar más oportunidades
+                        </Button>
+                    </div>
+                )}
+
+                {filteredJobs.length === 0 && (
+                    <div className="text-center py-20">
+                        <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                            <Search className="w-10 h-10 text-slate-300" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-700 mb-2">Sin resultados</h3>
+                        <p className="text-slate-500 mb-6">
+                            No encontramos vacantes con estos filtros. Intenta ampliar tu búsqueda.
+                        </p>
+                        <Button
+                            onClick={clearAllFilters}
+                            variant="outline"
+                            className="rounded-xl px-6"
+                        >
+                            Limpiar todos los filtros
+                        </Button>
+                    </div>
+                )}
             </main>
         </div>
     )
