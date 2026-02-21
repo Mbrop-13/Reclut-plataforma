@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+export const maxDuration = 60;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // Ensure this is set in .env
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const SITE_NAME = 'Reclu';

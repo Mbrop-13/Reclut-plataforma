@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { EMPLEOS } from '@/lib/mock-data';
 
-export const runtime = 'edge'; // Optional: Use edge runtime for lower latency if compatible
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
     try {
