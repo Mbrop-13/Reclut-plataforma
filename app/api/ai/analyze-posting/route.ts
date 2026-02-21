@@ -60,8 +60,11 @@ Devuelve EXACTAMENTE un objeto JSON con esta estructura (sin bloques markdown \`
 
         const data = await response.json()
         const content = data.choices[0].message.content
-        const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim()
-        const parsedContent = JSON.parse(cleanContent)
+        const start = content.indexOf('{')
+        const end = content.lastIndexOf('}')
+        if (start === -1 || end === -1) throw new Error("No JSON found")
+        const jsonStr = content.substring(start, end + 1)
+        const parsedContent = JSON.parse(jsonStr)
 
         return NextResponse.json(parsedContent)
     } catch (error) {

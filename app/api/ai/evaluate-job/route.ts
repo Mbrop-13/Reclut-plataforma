@@ -84,13 +84,15 @@ Requirements: ${requirements}`;
         const data = await response.json();
         const aiContent = data.choices[0].message.content;
 
-        // Parse JSON safely
         let parsedResult;
         try {
-            parsedResult = JSON.parse(aiContent);
+            const start = aiContent.indexOf('{')
+            const end = aiContent.lastIndexOf('}')
+            if (start === -1 || end === -1) throw new Error("No JSON found")
+            const jsonStr = aiContent.substring(start, end + 1)
+            parsedResult = JSON.parse(jsonStr);
         } catch (e) {
             console.error("Failed to parse AI response JSON", aiContent);
-            // Fallback or attempt partial parsing/cleaning
             parsedResult = {
                 score: 0,
                 salaryAnalysis: "Error parsing analysis",
