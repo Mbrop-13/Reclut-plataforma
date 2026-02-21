@@ -110,6 +110,8 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
         return () => unsubscribe()
     }, [params.id])
 
+    const isCompanyUser = !!(userProfile?.role === 'RECRUITER' || userProfile?.companyName || userProfile?.userType === 'company')
+
     // Check if user has already applied
     useEffect(() => {
         const checkApplicationStatus = async () => {
@@ -131,9 +133,6 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
         }
         checkApplicationStatus()
     }, [currentUser, job, isCompanyUser])
-
-
-    const isCompanyUser = !!(userProfile?.role === 'RECRUITER' || userProfile?.companyName || userProfile?.userType === 'company')
 
     const handleAIAnalysis = async () => {
         if (!currentUser || !userProfile) {
