@@ -278,45 +278,55 @@ export default function EmpleoDetallePage({ params }: { params: { id: string } }
             }
 
             // 3. Trigger AI Scoring (paid plans only)
-            const aiResponse = await fetch('/api/ai/score', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ job, candidate: candidateProfile })
-            })
-
-            if (aiResponse.ok) {
-                const aiData = await aiResponse.json()
-                const score = aiData.overallScore || 0
-                setAiScore(score)
-
-                await updateDoc(applicationRef, {
-                    aiScore: score,
-                    aiAnalysis: aiData,
-                    aiColor: aiData.colorCode
+            try {
+                const aiResponse = await fetch('/api/ai/score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job, candidate: candidateProfile })
                 })
 
+                if (aiResponse.ok) {
+                    const aiData = await aiResponse.json()
+                    const score = aiData.overallScore || 0
+                    setAiScore(score)
+
+                    await updateDoc(applicationRef, {
+                        aiScore: score,
+                        aiAnalysis: aiData,
+                        aiColor: aiData.colorCode
+                    })
+
+                    clearInterval(interval)
+                    setAnalysisProgress(100)
+
+                    // Determine Next Step based on Score
+                    const minScore = job.minScore || 70
+
+                    setTimeout(() => {
+                        if (score >= minScore && job.enableAvatarInterview) {
+                            setAppStep('success_interview')
+                        } else {
+                            setAppStep('success_standard')
+                        }
+                    }, 1000)
+                } else {
+                    console.warn("AI Analysis Failed with status", aiResponse.status)
+                    clearInterval(interval)
+                    setAnalysisProgress(100)
+                    setAppStep('success_standard')
+                }
+            } catch (aiError) {
+                console.warn("AI Analysis Error (Timeout/Network):", aiError)
                 clearInterval(interval)
                 setAnalysisProgress(100)
-
-                // 4. Determine Next Step based on Score
-                const minScore = job.minScore || 70
-
-                setTimeout(() => {
-                    if (score >= minScore && job.enableAvatarInterview) {
-                        setAppStep('success_interview')
-                    } else {
-                        setAppStep('success_standard')
-                    }
-                }, 1000)
-
-            } else {
-                throw new Error("AI Analysis Failed")
+                setAppStep('success_standard') // Fallback to standard success
             }
 
         } catch (error) {
-            console.error("Error applying:", error)
-            setAppStep('success_standard') // Fallback
-            toast.error("Error en el análisis, pero tu postulación fue enviada.")
+            console.error("Critical error applying:", error)
+            clearInterval(interval)
+            toast.error("Hubo un error crítico enviando tu postulación. Intenta más tarde.")
+            setIsApplicationOpen(false)
         }
     }
 
