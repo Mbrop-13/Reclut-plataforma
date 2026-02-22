@@ -8,7 +8,7 @@ import {
     ArrowLeft, AlertTriangle, Sparkles, Lock, Crown,
     Briefcase, MapPin, DollarSign, FileText, Settings2, CheckCircle2,
     Image as ImageIcon, X, Upload, Plus, Clock, Layers, Building2,
-    Globe, GripVertical, Eye, EyeOff, Trash2, BrainCircuit, Loader2, Check, RefreshCw
+    Globe, GripVertical, Eye, EyeOff, Trash2, BrainCircuit, Loader2, Check, RefreshCw, Monitor
 } from "lucide-react"
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, addDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
@@ -379,614 +379,726 @@ export default function NuevaPublicacionPage() {
     const labelClass = "text-sm font-medium text-slate-700"
 
     return (
-        <div className="p-6 lg:p-8 max-w-4xl mx-auto pb-20">
+        <div className="p-6 lg:p-8 max-w-[1400px] mx-auto pb-20">
             {/* Back link */}
             <Link
                 href="/empresas/mis-publicaciones"
-                className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 mb-6 transition-colors"
+                className="inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900 mb-8 transition-colors group"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" />
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 group-hover:bg-slate-200 transition-colors">
+                    <ArrowLeft className="w-4 h-4" />
+                </div>
                 Volver a mis publicaciones
             </Link>
 
-            {/* Header with progress */}
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-                <div className="flex items-start justify-between">
-                    <div>
-                        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-                            {isEditing ? "Editar Publicación" : "Nueva Publicación"}
-                        </h1>
-                        <p className="text-slate-500 mt-1">
-                            {isEditing ? "Modifica los detalles de tu oferta de empleo" : "Completa la información para publicar tu oferta de empleo"}
-                        </p>
-                    </div>
-                    <div className="hidden md:flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-2.5 shadow-sm">
-                        <div className="flex-1 w-24 bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <motion.div
-                                className="h-full bg-[#1890ff] rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ duration: 0.5 }}
-                            />
-                        </div>
-                        <span className="text-xs font-semibold text-slate-600">{progress}%</span>
-                    </div>
-                </div>
-            </motion.div>
+            <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
-            {/* Free plan warning banner */}
-            {isFreePlan && (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl"
-                >
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <AlertTriangle className="w-5 h-5 text-amber-600" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-amber-900 mb-1">Plan Gratuito — Publicación con límites</h3>
-                            <ul className="text-sm text-amber-700 space-y-1">
-                                <li>• Máximo <strong>1 publicación</strong> activa</li>
-                                <li>• Límite de <strong>5 postulantes</strong> por publicación</li>
-                                <li>• <strong>Sin entrevistas con IA</strong> ni scoring automático</li>
-                            </ul>
-                            <Link
-                                href="/empresas/planes"
-                                className="inline-flex items-center gap-1 text-sm font-semibold text-amber-800 hover:text-amber-900 mt-3 underline underline-offset-2"
-                            >
-                                <Crown className="w-3.5 h-3.5" />
-                                Mejorar mi plan para desbloquear todo
-                            </Link>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
+                {/* LEFT COLUMN: THE FORM */}
+                <div className="lg:col-span-7 space-y-6">
 
-            <div className="space-y-6">
-                {/* ============== SECTION 1: Basic Info ============== */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 }}
-                    className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
-                >
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <Briefcase className="w-5 h-5 text-[#1890ff]" />
-                        </div>
-                        <div>
-                            <h2 className="font-semibold text-slate-900">Información del Puesto</h2>
-                            <p className="text-xs text-slate-500">Datos principales de la publicación</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-5">
-                        {/* Title */}
-                        <div className="space-y-2">
-                            <label className={labelClass}>Título del Puesto <span className="text-red-400">*</span></label>
-                            <input
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                className={inputClass}
-                                placeholder="Ej. Senior React Developer"
-                            />
-                        </div>
-
-                        {/* Location + Work Mode */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className={labelClass}>Ubicación <span className="text-red-400">*</span></label>
-                                <LocationInput
-                                    value={location}
-                                    onChange={setLocation}
-                                    placeholder="Escribe una ciudad o región..."
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className={labelClass}>Modalidad</label>
-                                <select
-                                    value={workMode}
-                                    onChange={(e) => setWorkMode(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="Presencial">Presencial</option>
-                                    <option value="Híbrido">Híbrido</option>
-                                    <option value="Remoto">Remoto</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Address */}
-                        <div className="space-y-2">
-                            <label className={labelClass}>
-                                Dirección de la Oficina
-                                <span className="text-xs text-slate-400 ml-2 font-normal">(opcional)</span>
-                            </label>
-                            <div className="relative">
-                                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    value={address}
-                                    onChange={(e) => setAddress(e.target.value)}
-                                    className={`${inputClass} pl-10`}
-                                    placeholder="Ej. Av. Providencia 1234, Oficina 501, Santiago"
-                                />
-                            </div>
-                            <p className="text-xs text-slate-400">Se mostrará en la publicación para que los candidatos conozcan la ubicación exacta</p>
-                        </div>
-
-                        {/* Job Type + Experience + Industry */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <label className={labelClass}>Tipo de Empleo</label>
-                                <select
-                                    value={jobType}
-                                    onChange={(e) => setJobType(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    {JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className={labelClass}>Experiencia Requerida</label>
-                                <select
-                                    value={experienceLevel}
-                                    onChange={(e) => setExperienceLevel(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    {EXPERIENCE_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className={labelClass}>Industria</label>
-                                <select
-                                    value={industry}
-                                    onChange={(e) => setIndustry(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="">Seleccionar...</option>
-                                    {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* ============== SECTION 2: Salary ============== */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
-                >
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                                <DollarSign className="w-5 h-5 text-green-600" />
-                            </div>
+                    {/* Header with progress */}
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+                        <div className="flex items-start justify-between">
                             <div>
-                                <h2 className="font-semibold text-slate-900">Compensación</h2>
-                                <p className="text-xs text-slate-500">Rango salarial de la posición</p>
-                            </div>
-                        </div>
-
-                        {/* Show Salary Toggle */}
-                        <button
-                            type="button"
-                            onClick={() => setShowSalary(!showSalary)}
-                            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all border ${showSalary
-                                ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                                : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
-                                }`}
-                        >
-                            {showSalary ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            {showSalary ? "Visible" : "Oculto"}
-                        </button>
-                    </div>
-
-                    <AnimatePresence mode="wait">
-                        {showSalary ? (
-                            <motion.div
-                                key="salary-fields"
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                            >
-                                <div className="space-y-2">
-                                    <label className={labelClass}>Salario Mínimo</label>
-                                    <input
-                                        value={salaryMin}
-                                        onChange={(e) => setSalaryMin(e.target.value)}
-                                        type="number"
-                                        className={inputClass}
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className={labelClass}>Salario Máximo</label>
-                                    <input
-                                        value={salaryMax}
-                                        onChange={(e) => setSalaryMax(e.target.value)}
-                                        type="number"
-                                        className={inputClass}
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className={labelClass}>Moneda</label>
-                                    <select
-                                        value={currency}
-                                        onChange={(e) => setCurrency(e.target.value)}
-                                        className={inputClass}
-                                    >
-                                        {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
-                                    </select>
-                                </div>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="salary-hidden"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200"
-                            >
-                                <EyeOff className="w-5 h-5 text-slate-400" />
-                                <div>
-                                    <p className="text-sm font-medium text-slate-600">Salario oculto</p>
-                                    <p className="text-xs text-slate-400">Se mostrará como &quot;A convenir&quot; en la publicación</p>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.div>
-
-                {/* ============== SECTION 3: Description & Requirements ============== */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
-                >
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div>
-                            <h2 className="font-semibold text-slate-900">Descripción y Requisitos</h2>
-                            <p className="text-xs text-slate-500">Detalla el puesto para atraer al mejor talento</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-5">
-                        <div className="space-y-2">
-                            <label className={labelClass}>Descripción del Puesto <span className="text-red-400">*</span></label>
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                rows={5}
-                                className={textareaClass}
-                                placeholder="Describe las responsabilidades, el contexto del rol, el equipo de trabajo, y lo que hace especial a esta posición..."
-                            />
-                            <p className="text-xs text-slate-400 text-right">{description.length} caracteres</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="space-y-2">
-                                <label className={labelClass}>Responsabilidades <span className="text-xs text-slate-400 font-normal">(una por línea)</span></label>
-                                <textarea
-                                    value={responsibilities}
-                                    onChange={(e) => setResponsibilities(e.target.value)}
-                                    rows={4}
-                                    className={textareaClass}
-                                    placeholder={"Liderar equipo de desarrollo\nDiseñar arquitectura\nCode reviews"}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className={labelClass}>Requisitos <span className="text-red-400">*</span> <span className="text-xs text-slate-400 font-normal">(uno por línea)</span></label>
-                                <textarea
-                                    value={requirements}
-                                    onChange={(e) => setRequirements(e.target.value)}
-                                    rows={4}
-                                    className={textareaClass}
-                                    placeholder={"5+ años en React\nTypeScript\nAPIs REST"}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className={labelClass}>Beneficios <span className="text-xs text-slate-400 font-normal">(opcional, uno por línea)</span></label>
-                            <textarea
-                                value={benefits}
-                                onChange={(e) => setBenefits(e.target.value)}
-                                rows={3}
-                                className={textareaClass}
-                                placeholder={"Seguro médico\nHorario flexible\nTrabajo remoto\nBonos trimestrales"}
-                            />
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* ============== SECTION 4: Images ============== */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
-                >
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center">
-                            <ImageIcon className="w-5 h-5 text-pink-600" />
-                        </div>
-                        <div>
-                            <h2 className="font-semibold text-slate-900">Fotos del Lugar de Trabajo</h2>
-                            <p className="text-xs text-slate-500">Opcional — Muestra tus oficinas a los candidatos (máx. 4 fotos)</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {images.map((img, i) => (
-                            <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 group">
-                                <img src={img.url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => removeImage(i)}
-                                        className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center hover:bg-red-50 transition-colors"
-                                    >
-                                        <Trash2 className="w-4 h-4 text-red-500" />
-                                    </button>
-                                </div>
-                                <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/50 text-white text-[10px] font-medium">
-                                    {i + 1}/{images.length}
-                                </div>
-                            </div>
-                        ))}
-
-                        {images.length < 4 && (
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="aspect-[4/3] rounded-xl border-2 border-dashed border-slate-200 hover:border-[#1890ff] hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer group"
-                            >
-                                <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
-                                    <Upload className="w-5 h-5 text-slate-400 group-hover:text-[#1890ff] transition-colors" />
-                                </div>
-                                <span className="text-xs font-medium text-slate-400 group-hover:text-[#1890ff] transition-colors">Subir foto</span>
-                            </button>
-                        )}
-                    </div>
-
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageUpload}
-                        className="hidden"
-                    />
-
-                    {images.length > 0 && (
-                        <p className="text-xs text-slate-400 mt-3">{images.length}/4 fotos subidas</p>
-                    )}
-                </motion.div>
-
-                {/* ============== SECTION 5: AI Settings ============== */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    className={`rounded-2xl border p-6 lg:p-8 shadow-sm relative ${isFreePlan ? "bg-slate-50 border-slate-200" : "bg-white border-slate-200"}`}
-                >
-                    {isFreePlan && (
-                        <div className="absolute inset-0 bg-slate-50/80 backdrop-blur-[1px] rounded-2xl z-10 flex flex-col items-center justify-center">
-                            <div className="w-14 h-14 bg-slate-200 rounded-2xl flex items-center justify-center mb-3">
-                                <Lock className="w-7 h-7 text-slate-400" />
-                            </div>
-                            <p className="font-semibold text-slate-600 mb-1">Función Premium</p>
-                            <p className="text-sm text-slate-500 text-center max-w-xs mb-4">
-                                Entrevistas con IA y scoring automático disponibles en planes pagados
-                            </p>
-                            <Link href="/empresas/planes">
-                                <Button size="sm" className="bg-[#1890ff] hover:bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20">
-                                    <Crown className="w-3.5 h-3.5 mr-1.5" />
-                                    Ver Planes
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
-
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                            <Sparkles className="w-5 h-5 text-[#1890ff]" />
-                        </div>
-                        <div>
-                            <h2 className="font-semibold text-slate-900">IA y Entrevistas</h2>
-                            <p className="text-xs text-slate-500">Configura la evaluación automática de candidatos</p>
-                        </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className={labelClass}>Puntaje Mínimo para Entrevista (%)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={minScore}
-                                onChange={(e) => setMinScore(Number(e.target.value))}
-                                disabled={isFreePlan}
-                                className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                            />
-                            <p className="text-xs text-slate-500">
-                                Candidatos con este puntaje o superior serán invitados a entrevista.
-                            </p>
-                        </div>
-
-                        <div className="flex items-start gap-3 mt-1">
-                            <input
-                                type="checkbox"
-                                checked={enableAvatarInterview}
-                                onChange={(e) => setEnableAvatarInterview(e.target.checked)}
-                                id="enableAvatarInterview"
-                                disabled={isFreePlan}
-                                className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1890ff] focus:ring-[#1890ff] disabled:opacity-50 disabled:cursor-not-allowed"
-                            />
-                            <div className="space-y-1">
-                                <label htmlFor="enableAvatarInterview" className="text-sm font-medium cursor-pointer text-slate-700">
-                                    Habilitar Entrevista con Avatar IA
-                                </label>
-                                <p className="text-xs text-slate-500">
-                                    Los candidatos que califiquen podrán agendar una entrevista inicial con nuestro Agente de IA.
+                                <h1 className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
+                                    {isEditing ? "Editar Publicación" : "Nueva Oferta de Empleo"}
+                                </h1>
+                                <p className="text-slate-500 mt-2 text-lg">
+                                    {isEditing ? "Modifica los detalles de tu oferta de empleo" : "Completa la información para atraer a los mejores candidatos."}
                                 </p>
                             </div>
+                            <div className="hidden md:flex flex-col items-end gap-2">
+                                <span className="text-sm font-bold text-[#1890ff] uppercase tracking-wider">{progress}% Completado</span>
+                                <div className="w-32 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                    <motion.div
+                                        className="h-full bg-gradient-to-r from-[#1890ff] to-blue-400 rounded-full"
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${progress}%` }}
+                                        transition={{ duration: 0.5 }}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </motion.div>
+                    </motion.div>
 
-                {/* ============== SECTION 6: Copiloto IA ============== */}
-                {
-                    !isFreePlan && (
+                    {/* Free plan warning banner */}
+                    {isFreePlan && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-5 bg-gradient-to-r from-amber-50 to-orange-50/50 border border-amber-200/60 rounded-2xl mb-8"
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-amber-100 flex items-center justify-center flex-shrink-0">
+                                    <Crown className="w-6 h-6 text-amber-500" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-base font-bold text-amber-900 mb-1">Plan Gratuito Activo</h3>
+                                    <p className="text-sm text-amber-700 leading-relaxed mb-3">
+                                        Tienes un límite de <strong>1 publicación activa</strong> y <strong>5 postulantes</strong> por oferta. Las herramientas con IA están desactivadas.
+                                    </p>
+                                    <Link
+                                        href="/empresas/planes"
+                                        className="inline-flex items-center gap-2 text-sm font-bold text-amber-700 bg-amber-100/50 hover:bg-amber-100 px-4 py-2 rounded-lg transition-colors border border-amber-200/50"
+                                    >
+                                        <Sparkles className="w-4 h-4" />
+                                        Desbloquear todo el potencial
+                                    </Link>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    <div className="space-y-6">
+                        {/* ============== SECTION 1: Basic Info ============== */}
                         <motion.div
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.28 }}
-                            className="bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-200 p-6 lg:p-8 shadow-sm"
+                            transition={{ delay: 0.05 }}
+                            className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
                         >
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                                        <BrainCircuit className="w-5 h-5 text-purple-600" />
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                    <Briefcase className="w-5 h-5 text-[#1890ff]" />
+                                </div>
+                                <div>
+                                    <h2 className="font-semibold text-slate-900">Información del Puesto</h2>
+                                    <p className="text-xs text-slate-500">Datos principales de la publicación</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-5">
+                                {/* Title */}
+                                <div className="space-y-2">
+                                    <label className={labelClass}>Título del Puesto <span className="text-red-400">*</span></label>
+                                    <input
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        className={inputClass}
+                                        placeholder="Ej. Senior React Developer"
+                                    />
+                                </div>
+
+                                {/* Location + Work Mode */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>Ubicación <span className="text-red-400">*</span></label>
+                                        <LocationInput
+                                            value={location}
+                                            onChange={setLocation}
+                                            placeholder="Escribe una ciudad o región..."
+                                        />
                                     </div>
-                                    <div>
-                                        <h2 className="font-semibold text-purple-900">Copiloto IA: Asesor de Publicación</h2>
-                                        <p className="text-xs text-purple-600">Compara tu borrador contra el mercado para atraer mejor talento</p>
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>Modalidad</label>
+                                        <select
+                                            value={workMode}
+                                            onChange={(e) => setWorkMode(e.target.value)}
+                                            className={inputClass}
+                                        >
+                                            <option value="Presencial">Presencial</option>
+                                            <option value="Híbrido">Híbrido</option>
+                                            <option value="Remoto">Remoto</option>
+                                        </select>
                                     </div>
                                 </div>
 
-                                {!aiAnalysisResult && (
-                                    <Button
-                                        type="button"
-                                        onClick={handleAnalyzeMarket}
-                                        disabled={isAiAnalyzing}
-                                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-md flex items-center gap-2"
-                                    >
-                                        {isAiAnalyzing ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin" /> Analizando mercado...</>
-                                        ) : (
-                                            <><Sparkles className="w-4 h-4" /> Mejorar mi publicación</>
-                                        )}
-                                    </Button>
-                                )}
+                                {/* Address */}
+                                <div className="space-y-2">
+                                    <label className={labelClass}>
+                                        Dirección de la Oficina
+                                        <span className="text-xs text-slate-400 ml-2 font-normal">(opcional)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            value={address}
+                                            onChange={(e) => setAddress(e.target.value)}
+                                            className={`${inputClass} pl-10`}
+                                            placeholder="Ej. Av. Providencia 1234, Oficina 501, Santiago"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400">Se mostrará en la publicación para que los candidatos conozcan la ubicación exacta</p>
+                                </div>
+
+                                {/* Job Type + Experience + Industry */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>Tipo de Empleo</label>
+                                        <select
+                                            value={jobType}
+                                            onChange={(e) => setJobType(e.target.value)}
+                                            className={inputClass}
+                                        >
+                                            {JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>Experiencia Requerida</label>
+                                        <select
+                                            value={experienceLevel}
+                                            onChange={(e) => setExperienceLevel(e.target.value)}
+                                            className={inputClass}
+                                        >
+                                            {EXPERIENCE_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>Industria</label>
+                                        <select
+                                            value={industry}
+                                            onChange={(e) => setIndustry(e.target.value)}
+                                            className={inputClass}
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* ============== SECTION 2: Salary ============== */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                                        <DollarSign className="w-5 h-5 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="font-semibold text-slate-900">Compensación</h2>
+                                        <p className="text-xs text-slate-500">Rango salarial de la posición</p>
+                                    </div>
+                                </div>
+
+                                {/* Show Salary Toggle */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSalary(!showSalary)}
+                                    className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all border ${showSalary
+                                        ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                        : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                                        }`}
+                                >
+                                    {showSalary ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                    {showSalary ? "Visible" : "Oculto"}
+                                </button>
                             </div>
 
-                            <AnimatePresence>
-                                {aiAnalysisResult && (
+                            <AnimatePresence mode="wait">
+                                {showSalary ? (
                                     <motion.div
+                                        key="salary-fields"
                                         initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className="bg-white rounded-xl p-5 border border-purple-100 shadow-sm"
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="grid grid-cols-1 md:grid-cols-3 gap-4"
                                     >
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            <div>
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h4 className="text-sm font-bold text-slate-700">Atractivo vs Mercado</h4>
-                                                    <span className={`text-sm font-extrabold px-3 py-1 rounded-lg ${aiAnalysisResult.competitivenessScore >= 80 ? 'bg-green-100 text-green-700' : aiAnalysisResult.competitivenessScore >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {aiAnalysisResult.competitivenessScore}%
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                                                    {aiAnalysisResult.descriptionFeedback}
-                                                </p>
-
-                                                <h5 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-2"><DollarSign className="w-3.5 h-3.5" /> Análisis Salarial</h5>
-                                                <p className="text-xs text-slate-700 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                                                    {aiAnalysisResult.salaryComparison}
-                                                </p>
-                                            </div>
-
-                                            <div className="space-y-4">
-                                                {aiAnalysisResult.missingBenefits?.length > 0 && (
-                                                    <div>
-                                                        <h5 className="text-xs font-bold text-amber-600 uppercase flex items-center gap-1.5 mb-2"><AlertTriangle className="w-3.5 h-3.5" /> Beneficios Faltantes Comunes</h5>
-                                                        <ul className="text-xs text-slate-600 space-y-1.5">
-                                                            {aiAnalysisResult.missingBenefits.map((mb: string, i: number) => (
-                                                                <li key={i} className="flex items-start gap-1.5">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 flex-shrink-0" />
-                                                                    {mb}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-
-                                                {aiAnalysisResult.improvementTips?.length > 0 && (
-                                                    <div>
-                                                        <h5 className="text-xs font-bold text-purple-600 uppercase flex items-center gap-1.5 mb-2"><Sparkles className="w-3.5 h-3.5" /> Sugerencias de Mejora</h5>
-                                                        <ul className="text-xs text-slate-600 space-y-1.5">
-                                                            {aiAnalysisResult.improvementTips.map((tip: string, i: number) => (
-                                                                <li key={i} className="flex items-start gap-1.5">
-                                                                    <Check className="w-3.5 h-3.5 text-purple-500 flex-shrink-0 mt-[-2px]" />
-                                                                    {tip}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </div>
+                                        <div className="space-y-2">
+                                            <label className={labelClass}>Salario Mínimo</label>
+                                            <input
+                                                value={salaryMin}
+                                                onChange={(e) => setSalaryMin(e.target.value)}
+                                                type="number"
+                                                className={inputClass}
+                                                placeholder="0"
+                                            />
                                         </div>
-
-                                        <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={handleAnalyzeMarket}
-                                                disabled={isAiAnalyzing}
-                                                className="text-xs h-8 px-3 rounded-lg border-purple-200 text-purple-600 hover:bg-purple-50"
+                                        <div className="space-y-2">
+                                            <label className={labelClass}>Salario Máximo</label>
+                                            <input
+                                                value={salaryMax}
+                                                onChange={(e) => setSalaryMax(e.target.value)}
+                                                type="number"
+                                                className={inputClass}
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className={labelClass}>Moneda</label>
+                                            <select
+                                                value={currency}
+                                                onChange={(e) => setCurrency(e.target.value)}
+                                                className={inputClass}
                                             >
-                                                <RefreshCw className="w-3 h-3 mr-1.5" />
-                                                Re-analizar
-                                            </Button>
+                                                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+                                            </select>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="salary-hidden"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200"
+                                    >
+                                        <EyeOff className="w-5 h-5 text-slate-400" />
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-600">Salario oculto</p>
+                                            <p className="text-xs text-slate-400">Se mostrará como &quot;A convenir&quot; en la publicación</p>
                                         </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
                         </motion.div>
-                    )
-                }
 
-                {/* ============== Submit ============== */}
-                <motion.div
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex justify-between items-center pt-2"
-                >
-                    <Link href="/empresas/mis-publicaciones">
-                        <Button type="button" variant="outline" className="rounded-xl h-11 px-6">
-                            Cancelar
-                        </Button>
-                    </Link>
-                    <Button
-                        onClick={onSubmit}
-                        disabled={isSubmitting}
-                        className="bg-[#1890ff] hover:bg-blue-600 text-white rounded-xl h-11 px-8 font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                                Publicando...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                {isEditing ? "Guardar Cambios" : "Publicar Oferta"}
-                            </>
-                        )}
-                    </Button>
-                </motion.div>
+                        {/* ============== SECTION 3: Description & Requirements ============== */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15 }}
+                            className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                                    <FileText className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <div>
+                                    <h2 className="font-semibold text-slate-900">Descripción y Requisitos</h2>
+                                    <p className="text-xs text-slate-500">Detalla el puesto para atraer al mejor talento</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-5">
+                                <div className="space-y-2">
+                                    <label className={labelClass}>Descripción del Puesto <span className="text-red-400">*</span></label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        rows={5}
+                                        className={textareaClass}
+                                        placeholder="Describe las responsabilidades, el contexto del rol, el equipo de trabajo, y lo que hace especial a esta posición..."
+                                    />
+                                    <p className="text-xs text-slate-400 text-right">{description.length} caracteres</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>Responsabilidades <span className="text-xs text-slate-400 font-normal">(una por línea)</span></label>
+                                        <textarea
+                                            value={responsibilities}
+                                            onChange={(e) => setResponsibilities(e.target.value)}
+                                            rows={4}
+                                            className={textareaClass}
+                                            placeholder={"Liderar equipo de desarrollo\nDiseñar arquitectura\nCode reviews"}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>Requisitos <span className="text-red-400">*</span> <span className="text-xs text-slate-400 font-normal">(uno por línea)</span></label>
+                                        <textarea
+                                            value={requirements}
+                                            onChange={(e) => setRequirements(e.target.value)}
+                                            rows={4}
+                                            className={textareaClass}
+                                            placeholder={"5+ años en React\nTypeScript\nAPIs REST"}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className={labelClass}>Beneficios <span className="text-xs text-slate-400 font-normal">(opcional, uno por línea)</span></label>
+                                    <textarea
+                                        value={benefits}
+                                        onChange={(e) => setBenefits(e.target.value)}
+                                        rows={3}
+                                        className={textareaClass}
+                                        placeholder={"Seguro médico\nHorario flexible\nTrabajo remoto\nBonos trimestrales"}
+                                    />
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* ============== SECTION 4: Images ============== */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center">
+                                    <ImageIcon className="w-5 h-5 text-pink-600" />
+                                </div>
+                                <div>
+                                    <h2 className="font-semibold text-slate-900">Fotos del Lugar de Trabajo</h2>
+                                    <p className="text-xs text-slate-500">Opcional — Muestra tus oficinas a los candidatos (máx. 4 fotos)</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {images.map((img, i) => (
+                                    <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 group">
+                                        <img src={img.url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(i)}
+                                                className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center hover:bg-red-50 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4 text-red-500" />
+                                            </button>
+                                        </div>
+                                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/50 text-white text-[10px] font-medium">
+                                            {i + 1}/{images.length}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {images.length < 4 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="aspect-[4/3] rounded-xl border-2 border-dashed border-slate-200 hover:border-[#1890ff] hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer group"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                                            <Upload className="w-5 h-5 text-slate-400 group-hover:text-[#1890ff] transition-colors" />
+                                        </div>
+                                        <span className="text-xs font-medium text-slate-400 group-hover:text-[#1890ff] transition-colors">Subir foto</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleImageUpload}
+                                className="hidden"
+                            />
+
+                            {images.length > 0 && (
+                                <p className="text-xs text-slate-400 mt-3">{images.length}/4 fotos subidas</p>
+                            )}
+                        </motion.div>
+
+                        {/* ============== SECTION 5: AI Settings ============== */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className={`rounded-2xl border p-6 lg:p-8 shadow-sm relative ${isFreePlan ? "bg-slate-50 border-slate-200" : "bg-white border-slate-200"}`}
+                        >
+                            {isFreePlan && (
+                                <div className="absolute inset-0 bg-slate-50/80 backdrop-blur-[1px] rounded-2xl z-10 flex flex-col items-center justify-center">
+                                    <div className="w-14 h-14 bg-slate-200 rounded-2xl flex items-center justify-center mb-3">
+                                        <Lock className="w-7 h-7 text-slate-400" />
+                                    </div>
+                                    <p className="font-semibold text-slate-600 mb-1">Función Premium</p>
+                                    <p className="text-sm text-slate-500 text-center max-w-xs mb-4">
+                                        Entrevistas con IA y scoring automático disponibles en planes pagados
+                                    </p>
+                                    <Link href="/empresas/planes">
+                                        <Button size="sm" className="bg-[#1890ff] hover:bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20">
+                                            <Crown className="w-3.5 h-3.5 mr-1.5" />
+                                            Ver Planes
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
+
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                    <Sparkles className="w-5 h-5 text-[#1890ff]" />
+                                </div>
+                                <div>
+                                    <h2 className="font-semibold text-slate-900">IA y Entrevistas</h2>
+                                    <p className="text-xs text-slate-500">Configura la evaluación automática de candidatos</p>
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className={labelClass}>Puntaje Mínimo para Entrevista (%)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={minScore}
+                                        onChange={(e) => setMinScore(Number(e.target.value))}
+                                        disabled={isFreePlan}
+                                        className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    />
+                                    <p className="text-xs text-slate-500">
+                                        Candidatos con este puntaje o superior serán invitados a entrevista.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-start gap-3 mt-1">
+                                    <input
+                                        type="checkbox"
+                                        checked={enableAvatarInterview}
+                                        onChange={(e) => setEnableAvatarInterview(e.target.checked)}
+                                        id="enableAvatarInterview"
+                                        disabled={isFreePlan}
+                                        className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1890ff] focus:ring-[#1890ff] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    />
+                                    <div className="space-y-1">
+                                        <label htmlFor="enableAvatarInterview" className="text-sm font-medium cursor-pointer text-slate-700">
+                                            Habilitar Entrevista con Avatar IA
+                                        </label>
+                                        <p className="text-xs text-slate-500">
+                                            Los candidatos que califiquen podrán agendar una entrevista inicial con nuestro Agente de IA.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* ============== SECTION 6: Copiloto IA ============== */}
+                        {
+                            !isFreePlan && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.28 }}
+                                    className="bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-200 p-6 lg:p-8 shadow-sm"
+                                >
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                                                <BrainCircuit className="w-5 h-5 text-purple-600" />
+                                            </div>
+                                            <div>
+                                                <h2 className="font-semibold text-purple-900">Copiloto IA: Asesor de Publicación</h2>
+                                                <p className="text-xs text-purple-600">Compara tu borrador contra el mercado para atraer mejor talento</p>
+                                            </div>
+                                        </div>
+
+                                        {!aiAnalysisResult && (
+                                            <Button
+                                                type="button"
+                                                onClick={handleAnalyzeMarket}
+                                                disabled={isAiAnalyzing}
+                                                className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-md flex items-center gap-2"
+                                            >
+                                                {isAiAnalyzing ? (
+                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Analizando mercado...</>
+                                                ) : (
+                                                    <><Sparkles className="w-4 h-4" /> Mejorar mi publicación</>
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    <AnimatePresence>
+                                        {aiAnalysisResult && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="bg-white rounded-xl p-5 border border-purple-100 shadow-sm"
+                                            >
+                                                <div className="grid md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <h4 className="text-sm font-bold text-slate-700">Atractivo vs Mercado</h4>
+                                                            <span className={`text-sm font-extrabold px-3 py-1 rounded-lg ${aiAnalysisResult.competitivenessScore >= 80 ? 'bg-green-100 text-green-700' : aiAnalysisResult.competitivenessScore >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                                                                {aiAnalysisResult.competitivenessScore}%
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                                                            {aiAnalysisResult.descriptionFeedback}
+                                                        </p>
+
+                                                        <h5 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5 mb-2"><DollarSign className="w-3.5 h-3.5" /> Análisis Salarial</h5>
+                                                        <p className="text-xs text-slate-700 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                            {aiAnalysisResult.salaryComparison}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        {aiAnalysisResult.missingBenefits?.length > 0 && (
+                                                            <div>
+                                                                <h5 className="text-xs font-bold text-amber-600 uppercase flex items-center gap-1.5 mb-2"><AlertTriangle className="w-3.5 h-3.5" /> Beneficios Faltantes Comunes</h5>
+                                                                <ul className="text-xs text-slate-600 space-y-1.5">
+                                                                    {aiAnalysisResult.missingBenefits.map((mb: string, i: number) => (
+                                                                        <li key={i} className="flex items-start gap-1.5">
+                                                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 flex-shrink-0" />
+                                                                            {mb}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+
+                                                        {aiAnalysisResult.improvementTips?.length > 0 && (
+                                                            <div>
+                                                                <h5 className="text-xs font-bold text-purple-600 uppercase flex items-center gap-1.5 mb-2"><Sparkles className="w-3.5 h-3.5" /> Sugerencias de Mejora</h5>
+                                                                <ul className="text-xs text-slate-600 space-y-1.5">
+                                                                    {aiAnalysisResult.improvementTips.map((tip: string, i: number) => (
+                                                                        <li key={i} className="flex items-start gap-1.5">
+                                                                            <Check className="w-3.5 h-3.5 text-purple-500 flex-shrink-0 mt-[-2px]" />
+                                                                            {tip}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-5 pt-4 border-t border-slate-100 flex justify-end">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={handleAnalyzeMarket}
+                                                        disabled={isAiAnalyzing}
+                                                        className="text-xs h-8 px-3 rounded-lg border-purple-200 text-purple-600 hover:bg-purple-50"
+                                                    >
+                                                        <RefreshCw className="w-3 h-3 mr-1.5" />
+                                                        Re-analizar
+                                                    </Button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            )
+                        }
+
+                        {/* ============== Submit ============== */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="flex justify-between items-center pt-8 border-t border-slate-200 mt-8"
+                        >
+                            <Link href="/empresas/mis-publicaciones">
+                                <Button type="button" variant="outline" className="rounded-xl h-14 px-8 font-semibold text-slate-600 border-slate-200 hover:bg-slate-50 transition-colors">
+                                    Cancelar
+                                </Button>
+                            </Link>
+                            <Button
+                                onClick={onSubmit}
+                                disabled={isSubmitting}
+                                className="bg-[#1890ff] hover:bg-blue-600 hover:-translate-y-1 text-white rounded-xl h-14 px-10 text-lg font-bold shadow-[0_8px_30px_rgb(24,144,255,0.25)] hover:shadow-[0_8px_30px_rgb(24,144,255,0.4)] transition-all duration-300"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="animate-spin w-5 h-5 mr-3" />
+                                        Publicando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 className="w-5 h-5 mr-3" />
+                                        {isEditing ? "Guardar Cambios" : "Publicar Oferta"}
+                                    </>
+                                )}
+                            </Button>
+                        </motion.div>
+                    </div>
+                </div>
+
+                {/* RIGHT COLUMN: LIVE PREVIEW */}
+                <div className="hidden lg:block lg:col-span-5 sticky top-24">
+                    <div className="bg-white/60 backdrop-blur-2xl rounded-[32px] p-8 border border-white shadow-[0_8px_40px_rgb(0,0,0,0.04)] h-[calc(100vh-140px)] overflow-y-auto overflow-x-hidden relative" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+
+                        {/* CSS to hide scrollbar in Webkit browsers */}
+                        <style>{`
+                            .hidden-scrollbar::-webkit-scrollbar {
+                                display: none;
+                            }
+                        `}</style>
+                        <div className="hidden-scrollbar" style={{ position: 'absolute', inset: 0, overflowY: 'auto', padding: '2rem' }}>
+
+                            {/* Fake Browser Top */}
+                            <div className="sticky top-[-2rem] left-[-2rem] right-[-2rem] w-[calc(100%+4rem)] h-12 border-b border-slate-100 flex items-center px-6 gap-2 bg-slate-50/80 backdrop-blur-xl z-20 mb-8 -mt-8 rounded-t-[32px]">
+                                <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                                <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+                                <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                                <span className="ml-4 text-[11px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-2">
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    Vista Previa en Tiempo Real
+                                </span>
+                            </div>
+
+                            <div className="space-y-8">
+                                {/* Hero preview */}
+                                <div className="text-center pt-2">
+                                    <h1 className="text-4xl font-black tracking-tight text-slate-900 leading-[1.1] mb-5">
+                                        {title || "Desarrollador Full Stack Senior"}
+                                    </h1>
+                                    <div className="flex flex-wrap justify-center gap-4 text-[15px] text-slate-500 font-medium">
+                                        <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-[#1890ff]" />{location || "Santiago, Chile"}</span>
+                                        <span className="flex items-center gap-1.5"><Monitor className="w-4 h-4 text-purple-500" />{workMode || "Presencial"}</span>
+                                        <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-emerald-500" />{jobType || "Full-time"}</span>
+                                    </div>
+
+                                    {showSalary && salaryMin && salaryMax && (
+                                        <div className="mt-4 px-4 py-1.5 bg-green-50 text-green-700 rounded-full inline-flex items-center font-bold text-sm border border-green-200/50">
+                                            {currency} {Number(salaryMin).toLocaleString()} - {Number(salaryMax).toLocaleString()}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <hr className="border-slate-100" />
+
+                                {/* Content Preview */}
+                                <div className="space-y-10">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-slate-900 mb-4 tracking-tight">Acerca del Puesto</h3>
+                                        <p className="text-[15px] text-slate-600 leading-relaxed whitespace-pre-wrap">
+                                            {description || "La descripción de la vacante aparecerá aquí. Utiliza el editor para añadir detalles atractivos que capten la atención de los mejores talentos."}
+                                        </p>
+                                    </div>
+
+                                    {responsibilities && (
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-900 mb-4 tracking-tight">Lo que harás</h3>
+                                            <ul className="space-y-3">
+                                                {responsibilities.split('\n').filter(r => r.trim()).slice(0, 4).map((r, i) => (
+                                                    <li key={i} className="flex gap-3 items-start text-[15px] text-slate-600">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-[#1890ff] mt-2 flex-shrink-0" />
+                                                        <span className="leading-relaxed">{r}</span>
+                                                    </li>
+                                                ))}
+                                                {responsibilities.split('\n').filter(r => r.trim()).length > 4 && (
+                                                    <li className="text-sm text-slate-400 font-medium italic mt-2">y más responsabilidades...</li>
+                                                )}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {requirements && (
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-900 mb-4 tracking-tight">Lo que buscamos</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {requirements.split('\n').filter(req => req.trim()).slice(0, 5).map((req, i) => (
+                                                    <div key={i} className="px-3.5 py-1.5 bg-slate-50 text-slate-700 rounded-lg text-sm font-medium border border-slate-200/60 shadow-sm shadow-slate-100/50">
+                                                        {req}
+                                                    </div>
+                                                ))}
+                                                {requirements.split('\n').filter(req => req.trim()).length > 5 && (
+                                                    <div className="px-3.5 py-1.5 bg-slate-50 text-slate-400 rounded-lg text-sm font-medium border border-slate-200/60 shadow-sm">
+                                                        +{requirements.split('\n').filter(req => req.trim()).length - 5} más
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Action Card Preview */}
+                                    <div className="mt-8 bg-blue-50/50 border border-blue-100 rounded-2xl p-6 text-center">
+                                        <p className="text-sm font-bold text-slate-700 mb-3">Postula como Candidato</p>
+                                        <div className="w-full h-12 bg-[#1890ff]/50 rounded-xl flex items-center justify-center text-white/90 font-bold backdrop-blur-sm">
+                                            Postular Ahora
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="h-12 w-full"></div> {/* Spacer for bottom */}
+                            </div>
+                        </div>
+
+                        {/* Footer Fade */}
+                        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/80 to-transparent rounded-b-[32px] z-10"></div>
+                    </div>
+                </div>
             </div>
         </div>
     )
